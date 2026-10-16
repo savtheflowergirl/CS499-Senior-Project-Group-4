@@ -1,0 +1,16 @@
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\bin\Debug\net10.0\HorizonLunaris.Contracts.deps.json
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\bin\Debug\net10.0\HorizonLunaris.Contracts.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\bin\Debug\net10.0\HorizonLunaris.Contracts.pdb
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\bin\Debug\net10.0\HorizonLunaris.Domain.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\bin\Debug\net10.0\HorizonLunaris.Domain.pdb
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.csproj.AssemblyReference.cache
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.AssemblyInfoInputs.cache
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.AssemblyInfo.cs
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.csproj.CoreCompileInputs.cache
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.sourcelink.json
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonL.2F74649B.Up2Date
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\refint\HorizonLunaris.Contracts.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\HorizonLunaris.Contracts.pdb
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Contracts\obj\Debug\net10.0\ref\HorizonLunaris.Contracts.dll

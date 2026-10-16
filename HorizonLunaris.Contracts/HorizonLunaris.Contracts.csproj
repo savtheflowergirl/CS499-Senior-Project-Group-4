@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Request/response DTOs shared by the API and the web front end. -->
+  <ItemGroup>
+    <ProjectReference Include="..\HorizonLunaris.Domain\HorizonLunaris.Domain.csproj" />
+  </ItemGroup>
+</Project>

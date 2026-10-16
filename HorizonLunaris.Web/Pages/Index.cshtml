@@ -1,0 +1,31 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h1>Horizon Lunaris</h1>
+
+@if (Model.Error is not null)
+{
+    <div class="card error">@Model.Error</div>
+}
+
+<div class="card">
+    <h2>Acting as</h2>
+    <p>The prototype has no login. Pick who you are; every API call carries this choice.</p>
+    <form method="post">
+        <select name="userId">
+            @foreach (var user in Model.Users)
+            {
+                <option value="@user.Id" selected="@(user.Id == Model.CurrentUserId)">@user.Name (@user.Role)</option>
+            }
+        </select>
+        <button type="submit">Switch</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Features</h2>
+    <p>Feature pages will be added here as they are built (projects and tasks, status and comments, dependencies).</p>
+</div>

@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="HorizonLunaris.Api/HorizonLunaris.Api.csproj" />
+  <Project Path="HorizonLunaris.Contracts/HorizonLunaris.Contracts.csproj" />
+  <Project Path="HorizonLunaris.Data/HorizonLunaris.Data.csproj" />
+  <Project Path="HorizonLunaris.Domain/HorizonLunaris.Domain.csproj" />
+  <Project Path="HorizonLunaris.Tests/HorizonLunaris.Tests.csproj" />
+  <Project Path="HorizonLunaris.Web/HorizonLunaris.Web.csproj" />
+</Solution>

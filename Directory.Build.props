@@ -1,0 +1,9 @@
+<Project>
+  <!-- One place to change the target framework and EF Core version for every project. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EfCoreVersion>10.0.*</EfCoreVersion>
+  </PropertyGroup>
+</Project>

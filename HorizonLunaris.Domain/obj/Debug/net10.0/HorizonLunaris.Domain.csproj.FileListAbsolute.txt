@@ -1,0 +1,12 @@
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\bin\Debug\net10.0\HorizonLunaris.Domain.deps.json
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\bin\Debug\net10.0\HorizonLunaris.Domain.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\bin\Debug\net10.0\HorizonLunaris.Domain.pdb
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.AssemblyInfoInputs.cache
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.AssemblyInfo.cs
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.csproj.CoreCompileInputs.cache
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.sourcelink.json
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\refint\HorizonLunaris.Domain.dll
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\HorizonLunaris.Domain.pdb
+C:\Users\lipha\Desktop\Programming\C#\CS499-Senior-Project-Group-4\HorizonLunaris.Domain\obj\Debug\net10.0\ref\HorizonLunaris.Domain.dll
