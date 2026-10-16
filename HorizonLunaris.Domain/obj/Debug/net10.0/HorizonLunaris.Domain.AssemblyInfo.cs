@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HorizonLunaris.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a4e15afa702eb8437b7c0692e033ef51d22e83d4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+35dce45cdc88daee52539a0dd9591f92d997c9e8")]
 [assembly: System.Reflection.AssemblyProductAttribute("HorizonLunaris.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HorizonLunaris.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
