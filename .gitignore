@@ -1,1 +1,21 @@
+# Build output
+bin/
+obj/
 
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Local databases (each developer has their own)
+*.db
+*.db-shm
+*.db-wal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
