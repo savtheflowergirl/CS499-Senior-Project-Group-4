@@ -1,0 +1,142 @@
+
+@page
+@model HorizonLunaris.Web.Pages.ProjectsModel
+@{
+    ViewData["Title"] = "Projects & Tasks";
+}
+
+<h1>Projects & Tasks</h1>
+<p><a asp-page="/Index">Back to Home</a></p>
+@if (Model.Error != null)
+{
+    <div class="card error">
+        @Model.Error
+    </div>
+}
+<!-- create a new project -->
+<div class="card">
+    <h2>Create Project</h2>
+    <form method="post" asp-page-handler="CreateProject">
+        <p>
+            <label for="projectName">Project Name</label>
+            <input id="projectName" type="text" name="name" required />
+        </p>
+        <p>
+            <label for="projectDescription">Description</label>
+            <input id="projectDescription" type="text" name="description" />
+        </p>
+        <button type="submit">Create Project</button>
+    </form>
+</div>
+<!-- display all projects -->
+<div class="card">
+    <h2>Your Projects</h2>
+    @if (Model.Projects.Count == 0)
+    {
+        <p>No projects have been created yet.</p>
+    }
+    else
+    {
+        @foreach (var project in Model.Projects)
+        {
+            <p>
+                <a asp-page="/Projects"
+                   asp-route-projectId="@project.Id">
+                    @project.Name
+                </a>
+                - @project.Description
+            </p>
+        }
+    }
+</div>
+@if (Model.SelectedProjectId.HasValue)
+{
+    <!-- create task or subtask -->
+    <div class="card">
+        <h2>Add Task</h2>
+        <form method="post" asp-page-handler="CreateTask">
+            <input type="hidden"
+                   name="projectId"
+                   value="@Model.SelectedProjectId" />
+            <p>
+                <label for="taskTitle">Task Title</label>
+                <input id="taskTitle" type="text" name="title" required />
+            </p>
+            <p>
+                <label for="taskDescription">Description</label>
+                <input id="taskDescription" type="text" name="description" />
+            </p>
+            <p>
+                <label for="parentTask">Parent Task (optional)</label>
+                <select id="parentTask" name="parentTaskId">
+                    <option value="">None - Main Task</option>
+
+                    @foreach (var task in Model.Tasks)
+                    {
+                        <option value="@task.Id">@task.Title</option>
+                    }
+                </select>
+            </p>
+            <p>
+                <label for="taskOwner">Assign To (optional)</label>
+                <select id="taskOwner" name="ownerId">
+                    <option value="">Unassigned</option>
+
+                    @foreach (var user in Model.Users)
+                    {
+                        <option value="@user.Id">@user.Name</option>
+                    }
+                </select>
+            </p>
+            <button type="submit">Create Task</button>
+        </form>
+    </div>
+    <!-- display sleected project task -->
+    <div class="card">
+        <h2>Project Tasks</h2>
+        @if (Model.Tasks.Count == 0)
+        {
+            <p>No tasks have been added yet.</p>
+        }
+        else
+        {
+            @foreach (var task in Model.Tasks)
+            {
+                <div class="card"
+                     style="margin-left: @(task.ParentTaskId.HasValue ? "30px" : "0");">
+
+                    <h3>
+                        @if (task.ParentTaskId.HasValue)
+                        {
+                            <span>↳ Subtask: </span>
+                        }
+                        @task.Title
+                    </h3>
+                    <p>@task.Description</p>
+                    <p>Status: @task.Status</p>
+                    <p>Assigned to: @(task.OwnerName ?? "Unassigned")</p>
+                    <!-- reassign task -->
+                    <form method="post" asp-page-handler="AssignOwner">
+                        <input type="hidden"
+                               name="projectId"
+                               value="@Model.SelectedProjectId" />
+                        <input type="hidden"
+                               name="taskId"
+                               value="@task.Id" />
+                        <label for="owner-@task.Id">Reassign To</label>
+                        <select id="owner-@task.Id" name="ownerId">
+                            @foreach (var user in Model.Users)
+                            {
+                                <option value="@user.Id"
+                                        selected="@(user.Id == task.OwnerId)">
+                                    @user.Name
+                                </option>
+                            }
+                        </select>
+                        <button type="submit">Update Assignment</button>
+                    </form>
+                </div>
+            }
+        }
+    </div>
+}
