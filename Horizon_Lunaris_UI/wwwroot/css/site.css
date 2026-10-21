@@ -1,0 +1,148 @@
+/* Colors carried over from the WPF XAML */
+:root {
+    --bg-main: #1E232E;
+    --bg-sidebar: #151A22;
+    --nav-active: #2A3143;
+    --banner: #B0B8C1;
+    --panel: #CFD4DA;
+    --control: #8B919A;
+    --ink: #1E232E;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg-main);
+}
+
+/* MainWindow: 275px nav column + remaining content column */
+.app-shell {
+    display: grid;
+    grid-template-columns: 275px 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: var(--bg-sidebar);
+    padding: 20px;
+}
+
+.app-title {
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 10px 0 40px 0;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    height: 45px;
+    margin-bottom: 10px;
+    padding: 0 12px;
+    background: transparent;
+    color: lightgray;
+    font-size: 14px;
+    text-decoration: none;
+}
+.nav-btn:hover { background: rgba(42, 49, 67, 0.6); }
+.nav-btn.active { background: var(--nav-active); color: #fff; }
+
+.content {
+    padding: 20px;
+    overflow: auto;
+}
+
+.header-banner {
+    background: var(--banner);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.placeholder-text { color: lightgray; }
+
+/* UserRolesView: 7.5* / 20px spacer / 2.5* */
+.split {
+    display: grid;
+    grid-template-columns: 7.5fr 2.5fr;
+    column-gap: 20px;
+    align-items: start;
+}
+
+.panel {
+    background: var(--panel);
+    border-radius: 15px;
+    padding: 20px;
+    color: var(--ink);
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: normal;
+    margin: 0 0 15px 0;
+}
+
+/* Toolbar: search stretches, then Roles and Invite buttons */
+.toolbar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--control);
+    border-radius: 8px;
+    padding: 10px;
+}
+.search-icon { color: #4A5056; margin-right: 10px; }
+.search-bar input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: #333;
+    font-size: 14px;
+}
+.search-bar input::placeholder { color: #333; }
+
+.tool-btn {
+    background: var(--control);
+    color: var(--ink);
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.roles-btn { width: 100px; }
+.invite-btn { width: 130px; }
+
+/* Table: 2* 3* 2* 2* 1* */
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 3fr 2fr 2fr 1fr;
+    align-items: center;
+}
+.table-head {
+    margin: 0 10px 10px 10px;
+    font-size: 14px;
+}
+
+.row-card {
+    background: var(--control);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    color: #333;
+}
+.row-card.empty { text-align: center; display: block; }

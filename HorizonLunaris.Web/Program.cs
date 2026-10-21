@@ -20,6 +20,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 app.UseSession();
+app.UseStaticFiles();
 app.MapRazorPages();
 
 app.Run();
