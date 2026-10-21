@@ -1,6 +1,77 @@
 @page
+@model HorizonLunaris.Web.Pages.Tasks.IndexModel
 @{
     ViewData["Title"] = "Task Management";
 }
+
 <div class="header-banner">Task Management</div>
-<p class="placeholder-text">Projects, tasks, sub-tasks, statuses and comments will go here.</p>
+
+@if (Model.Message is not null)
+{
+    <div class="card success">@Model.Message</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="card error">@Model.ErrorMessage</div>
+}
+@if (Model.LoadError is not null)
+{
+    <div class="card error">@Model.LoadError</div>
+}
+
+<div class="split">
+
+    <!-- LEFT PANEL: Projects -->
+    <section class="panel">
+        <h2 class="panel-title">Projects</h2>
+
+        <div class="project-row table-head">
+            <div>Project</div>
+            <div>Description</div>
+            <div>Created</div>
+        </div>
+
+        @if (Model.Projects.Count == 0 && Model.LoadError is null)
+        {
+            <div class="row-card empty">No projects yet.</div>
+        }
+        else
+        {
+            @foreach (var p in Model.Projects)
+            {
+                <div class="row-card project-row">
+                    <div><a class="link" asp-page="/Tasks/Project" asp-route-id="@p.Id">@p.Name</a></div>
+                    <div>@(string.IsNullOrWhiteSpace(p.Description) ? "\u2014" : p.Description)</div>
+                    <div>@p.CreatedAtUtc.ToString("yyyy-MM-dd")</div>
+                </div>
+            }
+        }
+    </section>
+
+    <!-- RIGHT PANEL: New project -->
+    <aside class="panel">
+        <h2 class="panel-title">New project</h2>
+
+        @if (Model.CurrentUser is null)
+        {
+            <p class="hint">Choose who you are in the sidebar first.</p>
+        }
+        else if (!Model.IsProjectManager)
+        {
+            <p class="hint">Only a Project Manager can create projects. Switch to the Project Manager in the sidebar.</p>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="CreateProject">
+                <label asp-for="NewProject.Name">Name</label>
+                <input type="text" asp-for="NewProject.Name" maxlength="150" required />
+
+                <label asp-for="NewProject.Description">Description</label>
+                <textarea asp-for="NewProject.Description" rows="3" maxlength="2000"></textarea>
+
+                <button type="submit" class="btn">Create project</button>
+            </form>
+        }
+    </aside>
+
+</div>

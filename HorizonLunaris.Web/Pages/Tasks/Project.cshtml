@@ -1,0 +1,142 @@
+@page "{id:int}"
+@model HorizonLunaris.Web.Pages.Tasks.ProjectModel
+@{
+    ViewData["Title"] = Model.Project?.Name ?? "Project";
+}
+
+<div class="header-banner">@(Model.Project?.Name ?? "Project")</div>
+
+<p><a class="link light" asp-page="/Tasks/Index">&larr; All projects</a></p>
+
+@if (Model.Message is not null)
+{
+    <div class="card success">@Model.Message</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="card error">@Model.ErrorMessage</div>
+}
+@if (Model.LoadError is not null)
+{
+    <div class="card error">@Model.LoadError</div>
+}
+
+@if (Model.Project is not null)
+{
+    @if (!string.IsNullOrWhiteSpace(Model.Project.Description))
+    {
+        <p class="placeholder-text">@Model.Project.Description</p>
+    }
+
+    <div class="split">
+
+        <!-- LEFT PANEL: Tasks -->
+        <section class="panel">
+            <h2 class="panel-title">Tasks</h2>
+
+            <div class="task-row table-head">
+                <div>Task</div>
+                <div>Status</div>
+                <div>Owner</div>
+                <div>Due</div>
+                <div>Depends on</div>
+            </div>
+
+            @if (Model.Rows.Count == 0)
+            {
+                <div class="row-card empty">No tasks in this project yet.</div>
+            }
+            else
+            {
+                @foreach (var row in Model.Rows)
+                {
+                    var t = row.Task;
+                    <div class="row-card task-row">
+                        <div style="padding-left:@(row.Depth * 24)px">
+                            @if (row.Depth > 0) { <span class="subtask-mark">&#8627;</span> }
+                            <strong>#@t.Id</strong> @t.Title
+                        </div>
+
+                        <div><span class="badge badge-@t.Status.ToString().ToLowerInvariant()">@t.Status</span></div>
+
+                        <div>
+                            @if (Model.IsProjectManager)
+                            {
+                                <form method="post" asp-page-handler="AssignOwner" asp-route-id="@Model.Project.Id" class="inline-form">
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <select name="ownerId">
+                                        @if (t.OwnerId is null)
+                                        {
+                                            <option value="" selected disabled>Unassigned</option>
+                                        }
+                                        @foreach (var u in Model.Users)
+                                        {
+                                            <option value="@u.Id" selected="@(u.Id == t.OwnerId)">@u.Name</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn small">Assign</button>
+                                </form>
+                            }
+                            else
+                            {
+                                @(t.OwnerName ?? "Unassigned")
+                            }
+                        </div>
+
+                        <div>@(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")</div>
+
+                        <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => "#" + i)))</div>
+                    </div>
+                }
+            }
+        </section>
+
+        <!-- RIGHT PANEL: New task -->
+        <aside class="panel">
+            <h2 class="panel-title">New task</h2>
+
+            @if (Model.CurrentUser is null)
+            {
+                <p class="hint">Choose who you are in the sidebar first.</p>
+            }
+            else if (!Model.IsProjectManager)
+            {
+                <p class="hint">Only a Project Manager can create tasks and assign owners. Switch to the Project Manager in the sidebar.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="CreateTask" asp-route-id="@Model.Project.Id">
+                    <label asp-for="NewTask.Title">Title</label>
+                    <input type="text" asp-for="NewTask.Title" maxlength="200" required />
+
+                    <label asp-for="NewTask.Description">Description</label>
+                    <textarea asp-for="NewTask.Description" rows="3" maxlength="4000"></textarea>
+
+                    <label asp-for="NewTask.DueDate">Due date</label>
+                    <input type="date" asp-for="NewTask.DueDate" />
+
+                    <label asp-for="NewTask.ParentTaskId">Parent task (makes this a sub-task)</label>
+                    <select asp-for="NewTask.ParentTaskId">
+                        <option value="">None</option>
+                        @foreach (var t in Model.Tasks)
+                        {
+                            <option value="@t.Id">#@t.Id @t.Title</option>
+                        }
+                    </select>
+
+                    <label asp-for="NewTask.OwnerId">Owner</label>
+                    <select asp-for="NewTask.OwnerId">
+                        <option value="">Unassigned</option>
+                        @foreach (var u in Model.Users)
+                        {
+                            <option value="@u.Id">@u.Name</option>
+                        }
+                    </select>
+
+                    <button type="submit" class="btn">Create task</button>
+                </form>
+            }
+        </aside>
+
+    </div>
+}
