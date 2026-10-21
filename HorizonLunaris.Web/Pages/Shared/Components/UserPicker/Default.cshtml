@@ -1,0 +1,27 @@
+@model HorizonLunaris.Web.ViewComponents.UserPickerModel
+
+<div class="user-picker">
+    <div class="user-picker-label">Acting as</div>
+
+    @if (Model.Error is not null)
+    {
+        <div class="user-picker-error">@Model.Error</div>
+    }
+    else
+    {
+        <form method="post" asp-page="/SwitchUser">
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <select name="userId">
+                @if (Model.CurrentUserId is null)
+                {
+                    <option value="" selected disabled>Choose a user…</option>
+                }
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id" selected="@(user.Id == Model.CurrentUserId)">@user.Name (@user.Role)</option>
+                }
+            </select>
+            <button type="submit">Switch</button>
+        </form>
+    }
+</div>

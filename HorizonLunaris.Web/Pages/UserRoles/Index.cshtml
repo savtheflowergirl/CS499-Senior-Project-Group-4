@@ -1,0 +1,68 @@
+@page
+@model HorizonLunaris.Web.Pages.UserRoles.IndexModel
+@{
+    ViewData["Title"] = "User Roles";
+}
+
+<!-- Top Header Banner -->
+<div class="header-banner">USER ROLES and Team Management</div>
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="card error">@Model.ErrorMessage</div>
+}
+
+<!-- Main Content Split -->
+<div class="split">
+
+    <!-- LEFT PANEL: Team Members List -->
+    <section class="panel">
+        <h2 class="panel-title">Team members</h2>
+
+        <!-- Toolbar: Search, Roles Dropdown, Invite Button -->
+        <form method="get" class="toolbar">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="Search" value="@Model.Search" placeholder="Search team members" />
+            </div>
+
+            <button type="button" class="tool-btn roles-btn">Roles</button>
+            <button type="button" class="tool-btn invite-btn">+ Invite member</button>
+        </form>
+
+        <!-- Table Column Headers -->
+        <div class="table-row table-head">
+            <div>User</div>
+            <div>Email</div>
+            <div>Role</div>
+            <div>Active Tasks</div>
+            <div>Actions</div>
+        </div>
+
+        <!-- Member Rows -->
+        @if (Model.Members.Count == 0 && Model.ErrorMessage is null)
+        {
+            <div class="row-card empty">No team members found.</div>
+        }
+        else
+        {
+            @foreach (var m in Model.Members)
+            {
+                <div class="row-card table-row">
+                    <div>@m.Name@(m.Id == Model.CurrentUserId ? " (you)" : "")</div>
+                    <div>@m.Email</div>
+                    <div>@m.Role</div>
+                    <div>@(m.ActiveTasks?.ToString() ?? "\u2014")</div>
+                    <div>...</div>
+                </div>
+            }
+        }
+    </section>
+
+    <!-- RIGHT PANEL: Role Settings -->
+    <aside class="panel">
+        <h2 class="panel-title">Role Settings</h2>
+        <!-- Settings toggles and matrices will go here -->
+    </aside>
+
+</div>

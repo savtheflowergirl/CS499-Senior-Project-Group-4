@@ -1,23 +1,37 @@
+@{
+    // Razor Pages route value, e.g. "/Index", "/UserRoles/Index"
+    var page = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    string Active(string prefix) =>
+        page.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? "nav-btn active" : "nav-btn";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Horizon Lunaris</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 0; color: #1f2933; background: #f5f7fa; }
-        header { background: #1f2933; color: #fff; padding: 0.75rem 1.5rem; }
-        header a { color: #fff; text-decoration: none; font-weight: 600; }
-        main { max-width: 56rem; margin: 1.5rem auto; padding: 0 1rem; }
-        .card { background: #fff; border: 1px solid #d9e2ec; border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
-        .error { background: #fde8e8; border-color: #f5b5b5; }
-        select, button { font: inherit; padding: 0.3rem 0.6rem; }
-    </style>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <header><a href="/">Horizon Lunaris</a></header>
-    <main>
-        @RenderBody()
-    </main>
+    <div class="app-shell">
+
+        <!-- Left Navigation Panel -->
+        <nav class="sidebar">
+            <div class="app-title">Horizon Lunaris</div>
+
+            @await Component.InvokeAsync("UserPicker")
+
+            <a class="@(page == "/Index" ? "nav-btn active" : "nav-btn")" asp-page="/Index">Dashboard</a>
+            <a class="@Active("/Tasks")" asp-page="/Tasks/Index">Task Management</a>
+            <a class="@Active("/Automations")" asp-page="/Automations/Index">Automations</a>
+            <a class="@Active("/UserRoles")" asp-page="/UserRoles/Index">User Roles</a>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            @RenderBody()
+        </main>
+
+    </div>
 </body>
 </html>
