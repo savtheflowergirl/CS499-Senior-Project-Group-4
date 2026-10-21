@@ -6,8 +6,8 @@ namespace HorizonLunaris.Contracts;
 // ----- Feature 1: tasks and ownership -----
 
 public record CreateTaskRequest(
-    [property: Required, StringLength(200)] string Title,
-    [property: StringLength(4000)] string? Description,
+    [param: Required, StringLength(200)] string Title,
+    [param: StringLength(4000)] string? Description,
     DateTime? DueDateUtc,
     int? ParentTaskId,
     int? OwnerId);
