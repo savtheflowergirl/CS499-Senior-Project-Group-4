@@ -47,3 +47,5 @@ public class TaskItem
     /// </summary>
     public ICollection<TaskDependency> Dependents { get; set; } = new List<TaskDependency>();
 }
+
+
