@@ -22,6 +22,10 @@ public abstract class HorizonPageModel(IHorizonApiClient api) : PageModel
     [TempData] public string? Message { get; set; }
     [TempData] public string? ErrorMessage { get; set; }
 
+    /// <summary>Display text for a status ("InProgress" -> "In Progress").</summary>
+    public string Label(TaskItemStatus status) =>
+        status == TaskItemStatus.InProgress ? "In Progress" : status.ToString();
+
     protected async Task LoadUsersAsync(CancellationToken ct)
     {
         Users = await Api.GetUsersAsync(ct);

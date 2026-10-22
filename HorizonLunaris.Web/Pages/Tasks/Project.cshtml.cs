@@ -10,6 +10,7 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
     public ProjectDto? Project { get; private set; }
     public IReadOnlyList<TaskDto> Tasks { get; private set; } = [];
     public List<TaskRow> Rows { get; private set; } = [];
+    public Dictionary<int, TaskDto> TaskById { get; private set; } = new();
     public Dictionary<int, IReadOnlyList<CommentDto>> Comments { get; private set; } = new();
     public string? LoadError { get; private set; }
 
@@ -24,8 +25,9 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
     public static readonly TaskItemStatus[] StatusChoices =
         [TaskItemStatus.Available, TaskItemStatus.InProgress, TaskItemStatus.Completed];
 
-    public string Label(TaskItemStatus status) =>
-        status == TaskItemStatus.InProgress ? "In Progress" : status.ToString();
+    /// <summary>Task name for an id, so the UI never has to show raw database numbers.</summary>
+    public string TitleOf(int taskId) =>
+        TaskById.TryGetValue(taskId, out var task) ? task.Title : "Unknown task";
 
     /// <summary>Mirrors the API rule: only the task owner or a Project Manager may change status.</summary>
     public bool CanChangeStatus(TaskDto task) =>
@@ -39,6 +41,7 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
             Project = await Api.GetProjectAsync(id, ct);
             Tasks = await Api.GetTasksAsync(id, ct);
             Rows = Flatten(Tasks);
+            TaskById = Tasks.ToDictionary(t => t.Id);
 
             // Comments for every task in the project (one call per task)
             var commentLists = await Task.WhenAll(Tasks.Select(t => Api.GetCommentsAsync(t.Id, ct)));
@@ -110,7 +113,10 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
 
             if (result.UnlockedTaskIds.Count > 0)
             {
-                Message += " Unlocked: " + string.Join(", ", result.UnlockedTaskIds.Select(i => "#" + i)) + ".";
+                // The API returns ids; look up the names so the banner reads naturally
+                var titles = (await Api.GetTasksAsync(id, ct)).ToDictionary(t => t.Id, t => t.Title);
+                var names = result.UnlockedTaskIds.Select(i => titles.TryGetValue(i, out var title) ? $"\"{title}\"" : "another task");
+                Message += " Unlocked: " + string.Join(", ", names) + ".";
             }
         }
         catch (Exception ex) when (ex is HttpRequestException or ApiException)

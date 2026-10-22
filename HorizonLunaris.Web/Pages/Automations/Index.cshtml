@@ -1,6 +1,148 @@
 @page
+@model HorizonLunaris.Web.Pages.Automations.IndexModel
 @{
     ViewData["Title"] = "Automations";
 }
+
 <div class="header-banner">Automations</div>
-<p class="placeholder-text">Dependencies and unlock logic will go here.</p>
+
+@if (Model.Message is not null)
+{
+    <div class="card success">@Model.Message</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="card error">@Model.ErrorMessage</div>
+}
+@if (Model.LoadError is not null)
+{
+    <div class="card error">@Model.LoadError</div>
+}
+
+@if (Model.Projects.Count == 0 && Model.LoadError is null)
+{
+    <div class="card">No projects yet. Create one under Task Management first.</div>
+}
+else if (Model.SelectedProjectId is not null)
+{
+    <!-- Project picker -->
+    <section class="panel picker">
+        <form method="get" class="picker-form">
+            <label for="projectId">Project</label>
+            <select id="projectId" name="projectId" onchange="this.form.submit()">
+                @foreach (var p in Model.Projects)
+                {
+                    <option value="@p.Id" selected="@(p.Id == Model.SelectedProjectId)">@p.Name</option>
+                }
+            </select>
+            <noscript><button type="submit" class="btn small">Go</button></noscript>
+        </form>
+        <p class="hint">
+            A task stays <strong>Blocked</strong> until every prerequisite is <strong>Completed</strong>.
+            When the last one is completed, the task unlocks automatically and a notification is sent.
+        </p>
+    </section>
+
+    <div class="split">
+
+        <!-- LEFT PANEL: dependencies per task -->
+        <section class="panel">
+            <h2 class="panel-title">Task dependencies</h2>
+
+            <div class="dep-row table-head">
+                <div>Task</div>
+                <div>Status</div>
+                <div>Waits for</div>
+            </div>
+
+            @if (Model.Tasks.Count == 0)
+            {
+                <div class="row-card empty">No tasks in this project yet.</div>
+            }
+            else
+            {
+                @foreach (var t in Model.Tasks)
+                {
+                    <div class="row-card dep-row">
+                        <div>@t.Title</div>
+
+                        <div><span class="badge badge-@t.Status.ToString().ToLowerInvariant()">@Model.Label(t.Status)</span></div>
+
+                        <div class="chips">
+                            @if (t.PrerequisiteTaskIds.Count == 0)
+                            {
+                                <span class="muted">No prerequisites</span>
+                            }
+                            else
+                            {
+                                @foreach (var pid in t.PrerequisiteTaskIds)
+                                {
+                                    var pre = Model.TaskById.GetValueOrDefault(pid);
+                                    <span class="chip">
+                                        <span>@(pre?.Title ?? "Unknown task")</span>
+                                        @if (pre is not null)
+                                        {
+                                            <span class="badge badge-@pre.Status.ToString().ToLowerInvariant()">@Model.Label(pre.Status)</span>
+                                        }
+                                        @if (Model.IsProjectManager)
+                                        {
+                                            <form method="post" asp-page-handler="RemoveDependency" class="chip-form">
+                                                <input type="hidden" name="projectId" value="@Model.SelectedProjectId" />
+                                                <input type="hidden" name="taskId" value="@t.Id" />
+                                                <input type="hidden" name="prerequisiteTaskId" value="@pid" />
+                                                <button type="submit" class="chip-x" title="Remove this dependency">&times;</button>
+                                            </form>
+                                        }
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </section>
+
+        <!-- RIGHT PANEL: add a dependency -->
+        <aside class="panel">
+            <h2 class="panel-title">Add dependency</h2>
+
+            @if (Model.CurrentUser is null)
+            {
+                <p class="hint">Choose who you are in the sidebar first.</p>
+            }
+            else if (!Model.IsProjectManager)
+            {
+                <p class="hint">Only a Project Manager can create or change dependencies. Switch to the Project Manager in the sidebar.</p>
+            }
+            else if (Model.Tasks.Count < 2)
+            {
+                <p class="hint">Add at least two tasks to this project first.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="AddDependency">
+                    <input type="hidden" name="projectId" value="@Model.SelectedProjectId" />
+
+                    <label for="taskId">This task</label>
+                    <select id="taskId" name="taskId">
+                        @foreach (var t in Model.Tasks)
+                        {
+                            <option value="@t.Id">@t.Title</option>
+                        }
+                    </select>
+
+                    <label for="prerequisiteTaskId">cannot start until this task is completed</label>
+                    <select id="prerequisiteTaskId" name="prerequisiteTaskId">
+                        @foreach (var t in Model.Tasks)
+                        {
+                            <option value="@t.Id">@t.Title</option>
+                        }
+                    </select>
+
+                    <button type="submit" class="btn">Add dependency</button>
+                </form>
+            }
+        </aside>
+
+    </div>
+}

@@ -7,7 +7,14 @@
 
 <div class="header-banner">@(Model.Project?.Name ?? "Project")</div>
 
-<p><a class="link light" asp-page="/Tasks/Index">&larr; All projects</a></p>
+<p>
+    <a class="link light" asp-page="/Tasks/Index">&larr; All projects</a>
+    @if (Model.Project is not null)
+    {
+        <span class="sep">|</span>
+        <a class="link light" asp-page="/Automations/Index" asp-route-projectId="@Model.Project.Id">Manage dependencies</a>
+    }
+</p>
 
 @if (Model.Message is not null)
 {
@@ -58,7 +65,7 @@
                         <div class="task-row">
                             <div style="padding-left:@(row.Depth * 24)px">
                                 @if (row.Depth > 0) { <span class="subtask-mark">&#8627;</span> }
-                                <strong>#@t.Id</strong> @t.Title
+                                @t.Title
                             </div>
 
                             <!-- Status: editable for the owner or a PM, never for Blocked tasks -->
@@ -112,7 +119,7 @@
 
                             <div>@(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")</div>
 
-                            <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => "#" + i)))</div>
+                            <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => Model.TitleOf(i))))</div>
                         </div>
 
                         <!-- Progress comments -->
@@ -175,7 +182,7 @@
                         <option value="">None</option>
                         @foreach (var pt in Model.Tasks)
                         {
-                            <option value="@pt.Id">#@pt.Id @pt.Title</option>
+                            <option value="@pt.Id">@pt.Title</option>
                         }
                     </select>
 

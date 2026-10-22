@@ -157,9 +157,8 @@ public class DependencyService(
                 $"Completed task {completedTaskId} was not found.");
         }
 
-        var dependentTasks = await db.TaskDependencies
-            .Where(d => d.PrerequisiteTaskId == completedTaskId)
-            .Select(d => d.DependentTask)
+        var dependentTasks = await db.Tasks
+            .Where(t => t.Prerequisites.Any(d => d.PrerequisiteTaskId == completedTaskId))
             .Include(t => t.Owner)
             .Include(t => t.Prerequisites)
                 .ThenInclude(d => d.PrerequisiteTask)

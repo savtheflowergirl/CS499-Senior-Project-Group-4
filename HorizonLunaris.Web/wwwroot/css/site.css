@@ -273,3 +273,43 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 .comment-form { margin-top: 12px; }
 .comment-form textarea { background: var(--panel); }
 .comment-form .btn { margin-top: 8px; }
+
+/* ---------- Automations / dependencies ---------- */
+.sep { color: lightgray; margin: 0 8px; }
+.muted { color: #4A5056; font-size: 13px; }
+
+.picker { margin-bottom: 20px; }
+.picker-form { display: flex; align-items: center; gap: 12px; }
+.picker-form label { margin: 0; }
+.picker-form select { max-width: 320px; }
+.picker .hint { margin-top: 12px; }
+
+.dep-row {
+    display: grid;
+    grid-template-columns: 3fr 1.5fr 5fr;
+    gap: 10px;
+    align-items: center;
+}
+.table-head.dep-row { margin: 0 10px 10px 10px; font-size: 14px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel);
+    border-radius: 999px;
+    padding: 3px 4px 3px 10px;
+    font-size: 13px;
+}
+.chip-form { margin: 0; }
+.chip-x {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 8px;
+    color: var(--ink);
+}
+.chip-x:hover { color: #b00020; }
