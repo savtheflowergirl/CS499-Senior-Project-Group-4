@@ -1,12 +1,15 @@
 using HorizonLunaris.Contracts;
+using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+
 
 namespace HorizonLunaris.Web.Pages;
 public class ProjectsModel(IHorizonApiClient api) : PageModel
 {
     public IReadOnlyList<ProjectDto> Projects { get; set; } = [];
+    public Dictionary<int, IReadOnlyList<CommentDto>> TaskComments { get; set; } = new();
     public IReadOnlyList<TaskDto> Tasks { get; set; } = [];
     public IReadOnlyList<UserDto> Users { get; set; } = [];
 
@@ -22,8 +25,12 @@ public class ProjectsModel(IHorizonApiClient api) : PageModel
             Users = await api.GetUsersAsync(ct);
             if (projectId.HasValue)
             {
-                Tasks = await api.GetTasksAsync(projectId.Value, ct);
-            }
+               Tasks = await api.GetTasksAsync(projectId.Value, ct);
+                   foreach (var task in Tasks)
+                   {
+                       TaskComments[task.Id] = await api.GetCommentsAsync(task.Id, ct);
+                   }
+               }
         }
         catch (Exception ex) when (ex is ApiException or HttpRequestException)
         {
@@ -85,4 +92,40 @@ public class ProjectsModel(IHorizonApiClient api) : PageModel
             return Page();
         }
     }
+    // update task status; SM
+    public async Task<IActionResult> OnPostUpdateStatusAsync(
+        int projectId, int taskId, TaskItemStatus status)
+    {
+        try
+        {
+            await api.UpdateStatusAsync(
+                taskId, new UpdateStatusRequest(status));
+
+            return RedirectToPage(new { projectId });
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            var message = ex.Message;
+            await OnGetAsync(projectId, HttpContext.RequestAborted);
+            Error = message;
+            return Page();
+        }
+    }
+    public async Task<IActionResult> OnPostAddCommentAsync(
+        int projectId, int taskId, string text)
+    {
+        try
+        {
+            await api.AddCommentAsync(taskId, new AddCommentRequest(text));
+            return RedirectToPage(new { projectId });
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            var message = ex.Message;
+            await OnGetAsync(projectId, HttpContext.RequestAborted);
+            Error = message;
+            return Page();
+        }
+    }
+
 }

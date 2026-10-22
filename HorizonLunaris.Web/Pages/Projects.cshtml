@@ -114,7 +114,63 @@
                     </h3>
                     <p>@task.Description</p>
                     <p>Status: @task.Status</p>
+
+                    <!-- update task status -->
+                    <form method="post" asp-page-handler="UpdateStatus">
+                        <input type="hidden"
+                               name="projectId"
+                               value="@Model.SelectedProjectId" />
+                        <input type="hidden"
+                               name="taskId"
+                               value="@task.Id" />
+
+                        <label for="status-@task.Id">Change Status</label>
+                        <select id="status-@task.Id" name="status">
+                            <option value="1" selected="@(task.Status == HorizonLunaris.Domain.Enums.TaskItemStatus.Available)">
+                                Available
+                            </option>
+                            <option value="2" selected="@(task.Status == HorizonLunaris.Domain.Enums.TaskItemStatus.InProgress)">
+                                In Progress
+                            </option>
+                            <option value="3" selected="@(task.Status == HorizonLunaris.Domain.Enums.TaskItemStatus.Completed)">
+                                Completed
+                            </option>
+                        </select>
+
+                        <button type="submit">Update Status</button>
+                    </form>
+
                     <p>Assigned to: @(task.OwnerName ?? "Unassigned")</p>
+
+                    <form method="post" asp-page-handler="AddComment">
+                        <input type="hidden" name="projectId"
+                               value="@Model.SelectedProjectId" />
+                        <input type="hidden" name="taskId"
+                               value="@task.Id" />
+
+                        <p>
+                            <label for="comment-@task.Id">Add Comment</label>
+                            <textarea id="comment-@task.Id"
+                                      name="text"
+                                      maxlength="2000"
+                                      required></textarea>
+                        </p>
+
+                        <button type="submit">Post Comment</button>
+                    </form>
+
+                    @if (Model.TaskComments.TryGetValue(task.Id, out var comments))
+                    {
+                        foreach (var comment in comments)
+                        {
+                            <p>
+                                <strong>@comment.AuthorName</strong>
+                                (@comment.CreatedAtUtc.ToLocalTime().ToString("g")):
+                                @comment.Text
+                            </p>
+                        }
+                    }
+
                     <!-- reassign task -->
                     <form method="post" asp-page-handler="AssignOwner">
                         <input type="hidden"
@@ -140,3 +196,5 @@
         }
     </div>
 }
+
+
