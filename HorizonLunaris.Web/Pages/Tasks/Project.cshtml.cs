@@ -1,4 +1,5 @@
 using HorizonLunaris.Contracts;
+using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,26 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
     public ProjectDto? Project { get; private set; }
     public IReadOnlyList<TaskDto> Tasks { get; private set; } = [];
     public List<TaskRow> Rows { get; private set; } = [];
+    public Dictionary<int, IReadOnlyList<CommentDto>> Comments { get; private set; } = new();
     public string? LoadError { get; private set; }
+
+    // ?open=5 keeps that task's comments expanded after posting a comment
+    [BindProperty(SupportsGet = true)]
+    public int? Open { get; set; }
 
     [BindProperty]
     public NewTaskInput NewTask { get; set; } = new();
+
+    // Statuses a person can pick by hand. Blocked is set by the system, never chosen.
+    public static readonly TaskItemStatus[] StatusChoices =
+        [TaskItemStatus.Available, TaskItemStatus.InProgress, TaskItemStatus.Completed];
+
+    public string Label(TaskItemStatus status) =>
+        status == TaskItemStatus.InProgress ? "In Progress" : status.ToString();
+
+    /// <summary>Mirrors the API rule: only the task owner or a Project Manager may change status.</summary>
+    public bool CanChangeStatus(TaskDto task) =>
+        CurrentUser is not null && (IsProjectManager || task.OwnerId == CurrentUser.Id);
 
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken ct)
     {
@@ -22,6 +39,13 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
             Project = await Api.GetProjectAsync(id, ct);
             Tasks = await Api.GetTasksAsync(id, ct);
             Rows = Flatten(Tasks);
+
+            // Comments for every task in the project (one call per task)
+            var commentLists = await Task.WhenAll(Tasks.Select(t => Api.GetCommentsAsync(t.Id, ct)));
+            for (var i = 0; i < Tasks.Count; i++)
+            {
+                Comments[Tasks[i].Id] = commentLists[i];
+            }
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
@@ -33,6 +57,8 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         }
         return Page();
     }
+
+    // ----- Feature 1 -----
 
     public async Task<IActionResult> OnPostCreateTaskAsync(int id, CancellationToken ct)
     {
@@ -71,6 +97,42 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
             ErrorMessage = ex.Message;
         }
         return RedirectToPage(new { id });
+    }
+
+    // ----- Feature 2 -----
+
+    public async Task<IActionResult> OnPostUpdateStatusAsync(int id, int taskId, TaskItemStatus status, CancellationToken ct)
+    {
+        try
+        {
+            var result = await Api.UpdateStatusAsync(taskId, new UpdateStatusRequest(status), ct);
+            Message = $"\"{result.Task.Title}\" is now {Label(result.Task.Status)}.";
+
+            if (result.UnlockedTaskIds.Count > 0)
+            {
+                Message += " Unlocked: " + string.Join(", ", result.UnlockedTaskIds.Select(i => "#" + i)) + ".";
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            // e.g. "A blocked task cannot be started or completed." / "You cannot change this task's status."
+            ErrorMessage = ex.Message;
+        }
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostAddCommentAsync(int id, int taskId, string text, CancellationToken ct)
+    {
+        try
+        {
+            await Api.AddCommentAsync(taskId, new AddCommentRequest(text ?? ""), ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+        // Come back with that task's comments open
+        return RedirectToPage(pageName: null, pageHandler: null, routeValues: new { id, open = taskId }, fragment: $"task-{taskId}");
     }
 
     /// <summary>Orders tasks so each sub-task appears directly under its parent, with an indent depth.</summary>

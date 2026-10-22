@@ -1,4 +1,5 @@
 @page "{id:int}"
+@using HorizonLunaris.Domain.Enums
 @model HorizonLunaris.Web.Pages.Tasks.ProjectModel
 @{
     ViewData["Title"] = Model.Project?.Name ?? "Project";
@@ -51,41 +52,95 @@
                 @foreach (var row in Model.Rows)
                 {
                     var t = row.Task;
-                    <div class="row-card task-row">
-                        <div style="padding-left:@(row.Depth * 24)px">
-                            @if (row.Depth > 0) { <span class="subtask-mark">&#8627;</span> }
-                            <strong>#@t.Id</strong> @t.Title
+                    IReadOnlyList<CommentDto> commentList = Model.Comments.GetValueOrDefault(t.Id) ?? [];
+
+                    <div class="row-card" id="task-@t.Id">
+                        <div class="task-row">
+                            <div style="padding-left:@(row.Depth * 24)px">
+                                @if (row.Depth > 0) { <span class="subtask-mark">&#8627;</span> }
+                                <strong>#@t.Id</strong> @t.Title
+                            </div>
+
+                            <!-- Status: editable for the owner or a PM, never for Blocked tasks -->
+                            <div>
+                                @if (t.Status == TaskItemStatus.Blocked)
+                                {
+                                    <span class="badge badge-blocked" title="Waiting on prerequisite tasks">Blocked</span>
+                                }
+                                else if (Model.CanChangeStatus(t))
+                                {
+                                    <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.Project.Id" class="inline-form">
+                                        <input type="hidden" name="taskId" value="@t.Id" />
+                                        <select name="status">
+                                            @foreach (var s in ProjectModel.StatusChoices)
+                                            {
+                                                <option value="@s" selected="@(s == t.Status)">@Model.Label(s)</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn small">Update</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-@t.Status.ToString().ToLowerInvariant()">@Model.Label(t.Status)</span>
+                                }
+                            </div>
+
+                            <div>
+                                @if (Model.IsProjectManager)
+                                {
+                                    <form method="post" asp-page-handler="AssignOwner" asp-route-id="@Model.Project.Id" class="inline-form">
+                                        <input type="hidden" name="taskId" value="@t.Id" />
+                                        <select name="ownerId">
+                                            @if (t.OwnerId is null)
+                                            {
+                                                <option value="" selected disabled>Unassigned</option>
+                                            }
+                                            @foreach (var u in Model.Users)
+                                            {
+                                                <option value="@u.Id" selected="@(u.Id == t.OwnerId)">@u.Name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn small">Assign</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    @(t.OwnerName ?? "Unassigned")
+                                }
+                            </div>
+
+                            <div>@(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")</div>
+
+                            <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => "#" + i)))</div>
                         </div>
 
-                        <div><span class="badge badge-@t.Status.ToString().ToLowerInvariant()">@t.Status</span></div>
+                        <!-- Progress comments -->
+                        <details class="comments" open="@(Model.Open == t.Id)">
+                            <summary>Comments (@commentList.Count)</summary>
 
-                        <div>
-                            @if (Model.IsProjectManager)
+                            @foreach (var c in commentList)
                             {
-                                <form method="post" asp-page-handler="AssignOwner" asp-route-id="@Model.Project.Id" class="inline-form">
-                                    <input type="hidden" name="taskId" value="@t.Id" />
-                                    <select name="ownerId">
-                                        @if (t.OwnerId is null)
-                                        {
-                                            <option value="" selected disabled>Unassigned</option>
-                                        }
-                                        @foreach (var u in Model.Users)
-                                        {
-                                            <option value="@u.Id" selected="@(u.Id == t.OwnerId)">@u.Name</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn small">Assign</button>
-                                </form>
+                                <div class="comment">
+                                    <strong>@c.AuthorName</strong>
+                                    <span class="when">@c.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+                                    <div>@c.Text</div>
+                                </div>
+                            }
+
+                            @if (Model.CurrentUser is null)
+                            {
+                                <p class="hint">Choose who you are in the sidebar to comment.</p>
                             }
                             else
                             {
-                                @(t.OwnerName ?? "Unassigned")
+                                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Project.Id" class="comment-form">
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <textarea name="text" rows="2" maxlength="2000" placeholder="Add a progress comment" required></textarea>
+                                    <button type="submit" class="btn small">Post comment</button>
+                                </form>
                             }
-                        </div>
-
-                        <div>@(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")</div>
-
-                        <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => "#" + i)))</div>
+                        </details>
                     </div>
                 }
             }
@@ -118,9 +173,9 @@
                     <label asp-for="NewTask.ParentTaskId">Parent task (makes this a sub-task)</label>
                     <select asp-for="NewTask.ParentTaskId">
                         <option value="">None</option>
-                        @foreach (var t in Model.Tasks)
+                        @foreach (var pt in Model.Tasks)
                         {
-                            <option value="@t.Id">#@t.Id @t.Title</option>
+                            <option value="@pt.Id">#@pt.Id @pt.Title</option>
                         }
                     </select>
 

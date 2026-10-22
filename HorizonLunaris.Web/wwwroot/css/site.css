@@ -213,7 +213,7 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 
 .task-row {
     display: grid;
-    grid-template-columns: 4fr 1.4fr 2.8fr 1.4fr 1.6fr;
+    grid-template-columns: 3.4fr 2.8fr 2.6fr 1.2fr 1.4fr;
     gap: 10px;
     align-items: center;
 }
@@ -264,3 +264,12 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 .badge-available  { background: #cfe3ff; }
 .badge-inprogress { background: #ffe8a8; }
 .badge-completed  { background: #a8dbb5; }
+
+/* ---------- Task comments ---------- */
+.comments { margin-top: 10px; font-size: 14px; }
+.comments summary { cursor: pointer; font-weight: 600; }
+.comment { margin: 10px 0 0 4px; padding-left: 10px; border-left: 3px solid var(--panel); }
+.comment .when { color: #4A5056; font-size: 12px; margin-left: 6px; }
+.comment-form { margin-top: 12px; }
+.comment-form textarea { background: var(--panel); }
+.comment-form .btn { margin-top: 8px; }
