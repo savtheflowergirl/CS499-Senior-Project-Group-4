@@ -4,6 +4,7 @@
     string Active(string prefix) =>
         page.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? "nav-btn active" : "nav-btn";
 }
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +18,12 @@
 
         <!-- Left Navigation Panel -->
         <nav class="sidebar">
-            <div class="app-title">Horizon Lunaris</div>
+
+            <!-- Updated Logo and Title Section -->
+            <div class="brand-header">
+                <img src="~/images/logo.png" alt="Horizon Lunaris Logo" class="brand-logo" />
+                <div class="app-title">Horizon Lunaris</div>
+            </div>
 
             @await Component.InvokeAsync("UserPicker")
 
