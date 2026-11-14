@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>HorizonLunaris-Api</UserSecretsId>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\HorizonLunaris.Data\HorizonLunaris.Data.csproj" />
     <ProjectReference Include="..\HorizonLunaris.Contracts\HorizonLunaris.Contracts.csproj" />

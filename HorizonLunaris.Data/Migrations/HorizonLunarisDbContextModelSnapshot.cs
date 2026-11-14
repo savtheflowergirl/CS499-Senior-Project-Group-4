@@ -201,6 +201,13 @@ namespace HorizonLunaris.Data.Migrations
                             Email = "member2@example.com",
                             Name = "Demo Team Member 2",
                             Role = "TeamMember"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Email = "admin@example.com",
+                            Name = "Demo Administrator",
+                            Role = "Admin"
                         });
                 });
 

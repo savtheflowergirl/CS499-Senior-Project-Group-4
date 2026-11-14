@@ -29,7 +29,8 @@ public class TaskProgressService(
         throw new NotFoundException("Task not found.");
     // make sure valid user is changing status;SM
     var user = await currentUser.GetRequiredAsync(ct);
-    if (user.Role != UserRole.ProjectManager && task.Assignees.All(assignee => assignee.Id != user.Id))
+    if (user.Role is not (UserRole.ProjectManager or UserRole.Admin) &&
+        task.Assignees.All(assignee => assignee.Id != user.Id))
         throw new ForbiddenException("You cannot change this task's status.");
     // ensure task status is availiable;SM
     if (!Enum.IsDefined(request.Status))

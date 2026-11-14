@@ -8,8 +8,10 @@ namespace HorizonLunaris.Web.Services;
 /// </summary>
 public interface IHorizonApiClient
 {
-    // Users (works now)
+    // Users
     Task<IReadOnlyList<UserDto>> GetUsersAsync(CancellationToken ct = default);
+    Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken ct = default);
+    Task<UserDto> UpdateUserEmailAsync(int userId, UpdateUserEmailRequest request, CancellationToken ct = default);
 
     // Feature 1
     Task<IReadOnlyList<ProjectDto>> GetProjectsAsync(CancellationToken ct = default);

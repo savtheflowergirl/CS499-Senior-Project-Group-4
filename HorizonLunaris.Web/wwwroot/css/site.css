@@ -130,7 +130,7 @@ html, body {
 /* Table: 2* 3* 2* 2* 1* */
 .table-row {
     display: grid;
-    grid-template-columns: 2fr 3fr 2fr 2fr 1fr;
+    grid-template-columns: 2fr 3fr 2fr 2fr;
     align-items: center;
 }
 .table-head {
@@ -246,6 +246,13 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 .email-settings-form { max-width: 520px; }
 .email-settings-form input[type=email] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 8px; background: var(--control); color: var(--ink); font: inherit; }
 .email-settings-form .card { margin-top: 12px; }
+.user-create-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0 0 20px; padding: 14px; border-radius: 8px; background: var(--control); }
+.user-create-form h3 { grid-column: 1 / -1; margin: 0; font-size: 15px; }
+.user-create-form label { margin: 4px 0 0; }
+.user-create-form input, .user-create-form select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; }
+.user-create-form .btn { grid-column: 1 / -1; justify-self: start; margin-top: 4px; }
+.user-email-form { display: flex; align-items: center; gap: 6px; }
+.user-email-form input[type=email] { min-width: 0; width: 100%; box-sizing: border-box; padding: 7px 8px; border: 0; border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; }
 
 .assignee-form { min-width: 0; }
 .assignee-editor summary { cursor: pointer; font-size: 13px; }

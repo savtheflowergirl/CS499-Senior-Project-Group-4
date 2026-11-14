@@ -1,32 +1,33 @@
 using System.Text.RegularExpressions;
+using HorizonLunaris.Contracts;
+using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HorizonLunaris.Web.Pages.UserRoles;
 
-public class IndexModel : PageModel
+public class IndexModel(IHorizonApiClient api) : HorizonPageModel(api)
 {
-    private readonly IHorizonApiClient _api;
-
-    public IndexModel(IHorizonApiClient api) => _api = api;
+    private readonly IHorizonApiClient _api = api;
 
     // GET /UserRoles?Search=ell
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
     public List<TeamMemberRow> Members { get; private set; } = new();
+    [BindProperty] public string NewName { get; set; } = "";
+    [BindProperty] public string NewEmail { get; set; } = "";
+    [BindProperty] public UserRole NewRole { get; set; } = UserRole.TeamMember;
 
     // The user chosen in the sidebar picker (same session key the API client uses)
     public int? CurrentUserId => HttpContext.Session.GetInt32(UserHeaderHandler.SessionKey);
-
-    public string? ErrorMessage { get; private set; }
 
     public async Task OnGetAsync(CancellationToken ct)
     {
         try
         {
-            var users = await _api.GetUsersAsync(ct);
+            await LoadUsersAsync(ct);
+            var users = Users;
 
             Members = users.Select(u => new TeamMemberRow
             {
@@ -53,6 +54,36 @@ public class IndexModel : PageModel
                 m.Email.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
                 m.Role.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
         }
+    }
+
+    public async Task<IActionResult> OnPostCreateUserAsync(CancellationToken ct)
+    {
+        try
+        {
+            var user = await _api.CreateUserAsync(new CreateUserRequest(NewName, NewEmail, NewRole), ct);
+            Message = $"Created {user.Name} ({user.Email}).";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { Search });
+    }
+
+    public async Task<IActionResult> OnPostUpdateEmailAsync(int userId, string email, CancellationToken ct)
+    {
+        try
+        {
+            var user = await _api.UpdateUserEmailAsync(userId, new UpdateUserEmailRequest(email), ct);
+            Message = $"Updated {user.Name}'s email address.";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { Search });
     }
 
     /// <summary>

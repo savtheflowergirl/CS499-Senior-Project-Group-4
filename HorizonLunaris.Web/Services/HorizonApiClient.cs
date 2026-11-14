@@ -12,6 +12,12 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
     public Task<IReadOnlyList<UserDto>> GetUsersAsync(CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<UserDto>>(HttpMethod.Get, "api/users", null, ct);
 
+    public Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken ct = default) =>
+        SendAsync<UserDto>(HttpMethod.Post, "api/users", request, ct);
+
+    public Task<UserDto> UpdateUserEmailAsync(int userId, UpdateUserEmailRequest request, CancellationToken ct = default) =>
+        SendAsync<UserDto>(HttpMethod.Put, $"api/users/{userId}/email", request, ct);
+
     // ----- Feature 1 -----
     public Task<IReadOnlyList<ProjectDto>> GetProjectsAsync(CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<ProjectDto>>(HttpMethod.Get, "api/projects", null, ct);

@@ -7,5 +7,6 @@ namespace HorizonLunaris.Domain.Enums;
 public enum UserRole
 {
     TeamMember = 0,
-    ProjectManager = 1
+    ProjectManager = 1,
+    Admin = 2
 }

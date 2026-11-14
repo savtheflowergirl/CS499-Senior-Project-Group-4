@@ -64,9 +64,14 @@ public class EmailNotificationTests
         public Task<User> GetRequiredAsync(CancellationToken ct = default) => Task.FromResult(user);
 
         public Task<User> GetRequiredProjectManagerAsync(CancellationToken ct = default) =>
-            user.Role == UserRole.ProjectManager
+            user.Role is UserRole.ProjectManager or UserRole.Admin
                 ? Task.FromResult(user)
-                : Task.FromException<User>(new ForbiddenException("Only a Project Manager can perform this action."));
+                : Task.FromException<User>(new ForbiddenException("Only a Project Manager or Admin can perform this action."));
+
+        public Task<User> GetRequiredAdminAsync(CancellationToken ct = default) =>
+            user.Role == UserRole.Admin
+                ? Task.FromResult(user)
+                : Task.FromException<User>(new ForbiddenException("Only an Admin can manage users."));
     }
 
     private sealed class ReadyDependencies : IDependencyService

@@ -35,7 +35,8 @@ public class HorizonLunarisDbContext : DbContext
             e.HasData(
                 new User { Id = 1, Name = "Demo Project Manager", Email = "pm@example.com", Role = UserRole.ProjectManager },
                 new User { Id = 2, Name = "Demo Team Member 1", Email = "member1@example.com", Role = UserRole.TeamMember },
-                new User { Id = 3, Name = "Demo Team Member 2", Email = "member2@example.com", Role = UserRole.TeamMember }
+                new User { Id = 3, Name = "Demo Team Member 2", Email = "member2@example.com", Role = UserRole.TeamMember },
+                new User { Id = 4, Name = "Demo Administrator", Email = "admin@example.com", Role = UserRole.Admin }
             );
         });
 
