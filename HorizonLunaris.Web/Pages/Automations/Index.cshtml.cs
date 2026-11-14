@@ -11,6 +11,8 @@ public class IndexModel(IHorizonApiClient api) : HorizonPageModel(api)
     public int? SelectedProjectId { get; private set; }
     public IReadOnlyList<TaskDto> Tasks { get; private set; } = [];
     public Dictionary<int, TaskDto> TaskById { get; private set; } = new();
+    public EmailSenderSettingsDto? EmailSettings { get; private set; }
+    [BindProperty] public string SourceEmail { get; set; } = "";
     public string? LoadError { get; private set; }
 
     // GET /Automations?projectId=2
@@ -19,6 +21,8 @@ public class IndexModel(IHorizonApiClient api) : HorizonPageModel(api)
         try
         {
             await LoadUsersAsync(ct);
+            EmailSettings = await Api.GetEmailSenderSettingsAsync(ct);
+            SourceEmail = EmailSettings.SourceEmail;
             Projects = await Api.GetProjectsAsync(ct);
             SelectedProjectId = projectId ?? Projects.FirstOrDefault()?.Id;
 
@@ -32,6 +36,29 @@ public class IndexModel(IHorizonApiClient api) : HorizonPageModel(api)
         {
             LoadError = $"Could not load dependencies: {ex.Message}";
         }
+    }
+
+    public async Task<IActionResult> OnPostUpdateEmailSenderAsync(int? projectId, CancellationToken ct)
+    {
+        if (!System.Net.Mail.MailAddress.TryCreate(SourceEmail, out var address) ||
+            !string.Equals(address.Address, SourceEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            ErrorMessage = "Enter a valid source email address.";
+            return RedirectToPage(new { projectId });
+        }
+
+        try
+        {
+            EmailSettings = await Api.UpdateEmailSenderSettingsAsync(new UpdateEmailSenderRequest(address.Address), ct);
+            Message = EmailSettings.SmtpConfigured
+                ? $"Email notifications will be sent from {EmailSettings.SourceEmail}."
+                : $"Sender address saved as {EmailSettings.SourceEmail}. Configure SMTP credentials to enable delivery.";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+        return RedirectToPage(new { projectId });
     }
 
     public async Task<IActionResult> OnPostAddDependencyAsync(int projectId, int taskId, int prerequisiteTaskId, CancellationToken ct)

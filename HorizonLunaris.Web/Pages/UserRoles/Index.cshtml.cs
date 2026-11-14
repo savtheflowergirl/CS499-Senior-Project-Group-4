@@ -56,7 +56,7 @@ public class IndexModel : PageModel
     }
 
     /// <summary>
-    /// Active Tasks = tasks owned by the user that have not been completed (CompletedAtUtc is null).
+    /// Active Tasks = uncompleted tasks assigned to the user.
     /// If this lookup fails, the table still renders and the column shows a dash.
     /// </summary>
     private async Task LoadActiveTaskCountsAsync(CancellationToken ct)
@@ -65,18 +65,19 @@ public class IndexModel : PageModel
         {
             var projects = await _api.GetProjectsAsync(ct);
 
-            // One call per project (fine for a prototype; an API "tasks by owner" endpoint would be better later)
+            // One call per project (fine for a prototype; an API "tasks by assignee" endpoint would be better later)
             var taskLists = await Task.WhenAll(projects.Select(p => _api.GetTasksAsync(p.Id, ct)));
 
-            var countsByOwner = taskLists
+            var countsByAssignee = taskLists
                 .SelectMany(list => list)
-                .Where(t => t.OwnerId.HasValue && t.CompletedAtUtc is null)
-                .GroupBy(t => t.OwnerId!.Value)
+                .Where(t => t.CompletedAtUtc is null)
+                .SelectMany(t => t.Assignees.Select(assignee => assignee.Id))
+                .GroupBy(userId => userId)
                 .ToDictionary(g => g.Key, g => g.Count());
 
             foreach (var m in Members)
             {
-                m.ActiveTasks = countsByOwner.TryGetValue(m.Id, out var n) ? n : 0;
+                m.ActiveTasks = countsByAssignee.TryGetValue(m.Id, out var n) ? n : 0;
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

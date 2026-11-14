@@ -16,6 +16,7 @@ public class HorizonLunarisDbContext : DbContext
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<EmailNotificationSettings> EmailNotificationSettings => Set<EmailNotificationSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,11 +73,17 @@ public class HorizonLunarisDbContext : DbContext
                 .HasForeignKey(t => t.ParentTaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Owner is optional; deleting a user un-assigns their tasks.
-            e.HasOne(t => t.Owner)
-                .WithMany(u => u.OwnedTasks)
-                .HasForeignKey(t => t.OwnerId)
-                .OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(t => t.Assignees)
+                .WithMany(u => u.AssignedTasks)
+                .UsingEntity<Dictionary<string, object>>(
+                    "TaskAssignees",
+                    right => right.HasOne<User>().WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade),
+                    left => left.HasOne<TaskItem>().WithMany().HasForeignKey("TaskId").OnDelete(DeleteBehavior.Cascade),
+                    join =>
+                    {
+                        join.HasKey("TaskId", "UserId");
+                        join.HasIndex("UserId");
+                    });
 
             e.HasIndex(t => new { t.ProjectId, t.Status });
         });
@@ -106,6 +113,20 @@ public class HorizonLunarisDbContext : DbContext
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_TaskDependency_NoSelfReference",
                 "\"DependentTaskId\" <> \"PrerequisiteTaskId\""));
+        });
+
+        // ---------- Email notification settings ----------
+        modelBuilder.Entity<EmailNotificationSettings>(e =>
+        {
+            e.HasKey(settings => settings.Id);
+            e.Property(settings => settings.SourceEmail).IsRequired().HasMaxLength(254);
+        });
+
+        // ---------- Email notification settings ----------
+        modelBuilder.Entity<EmailNotificationSettings>(e =>
+        {
+            e.HasKey(settings => settings.Id);
+            e.Property(settings => settings.SourceEmail).IsRequired().HasMaxLength(254);
         });
 
         // ---------- Comment ----------

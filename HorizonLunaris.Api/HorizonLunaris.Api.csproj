@@ -4,6 +4,7 @@
     <ProjectReference Include="..\HorizonLunaris.Contracts\HorizonLunaris.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

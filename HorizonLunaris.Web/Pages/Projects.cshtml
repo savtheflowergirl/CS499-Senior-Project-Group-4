@@ -77,17 +77,19 @@
                     }
                 </select>
             </p>
-            <p>
-                <label for="taskOwner">Assign To (optional)</label>
-                <select id="taskOwner" name="ownerId">
-                    <option value="">Unassigned</option>
-
+            <div class="assignee-picker">
+                <label>Assignees (optional)</label>
+                <input type="search" class="assignee-search" placeholder="Search team members" aria-label="Search team members" />
+                <div class="assignee-list">
                     @foreach (var user in Model.Users)
                     {
-                        <option value="@user.Id">@user.Name</option>
+                        <label class="assignee-option" data-search="@user.Name @user.Email">
+                            <input type="checkbox" name="assigneeIds" value="@user.Id" />
+                            <span>@user.Name</span>
+                        </label>
                     }
-                </select>
-            </p>
+                </div>
+            </div>
             <button type="submit">Create Task</button>
         </form>
     </div>
@@ -114,6 +116,10 @@
                     </h3>
                     <p>@task.Description</p>
                     <p>Status: @task.Status</p>
+                    @if (task.DueDateUtc is { } dueDate)
+                    {
+                        <a class="btn small calendar-link" href="@GoogleCalendarLink.Create(task.Title, dueDate)" target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
+                    }
 
                     <!-- update task status -->
                     <form method="post" asp-page-handler="UpdateStatus">
@@ -140,7 +146,7 @@
                         <button type="submit">Update Status</button>
                     </form>
 
-                    <p>Assigned to: @(task.OwnerName ?? "Unassigned")</p>
+                    <p>Assigned to: @(task.Assignees.Count == 0 ? "Unassigned" : string.Join(", ", task.Assignees.Select(assignee => assignee.Name)))</p>
 
                     <form method="post" asp-page-handler="AddComment">
                         <input type="hidden" name="projectId"
@@ -171,25 +177,23 @@
                         }
                     }
 
-                    <!-- reassign task -->
-                    <form method="post" asp-page-handler="AssignOwner">
-                        <input type="hidden"
-                               name="projectId"
-                               value="@Model.SelectedProjectId" />
-                        <input type="hidden"
-                               name="taskId"
-                               value="@task.Id" />
-                        <label for="owner-@task.Id">Reassign To</label>
-                        <select id="owner-@task.Id" name="ownerId">
-                            @foreach (var user in Model.Users)
-                            {
-                                <option value="@user.Id"
-                                        selected="@(user.Id == task.OwnerId)">
-                                    @user.Name
-                                </option>
-                            }
-                        </select>
-                        <button type="submit">Update Assignment</button>
+                    <form method="post" asp-page-handler="AssignAssignees">
+                        <input type="hidden" name="projectId" value="@Model.SelectedProjectId" />
+                        <input type="hidden" name="taskId" value="@task.Id" />
+                        <div class="assignee-picker">
+                            <label>Assignees</label>
+                            <input type="search" class="assignee-search" placeholder="Search team members" aria-label="Search team members" />
+                            <div class="assignee-list">
+                                @foreach (var user in Model.Users)
+                                {
+                                    <label class="assignee-option" data-search="@user.Name @user.Email">
+                                        <input type="checkbox" name="assigneeIds" value="@user.Id" checked="@(task.Assignees.Any(assignee => assignee.Id == user.Id))" />
+                                        <span>@user.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <button type="submit">Save Assignees</button>
                     </form>
                 </div>
             }
@@ -197,4 +201,19 @@
     </div>
 }
 
-
+<script>
+    document.querySelectorAll(".assignee-picker").forEach(picker => {
+        const search = picker.querySelector(".assignee-search");
+        const options = [...picker.querySelectorAll(".assignee-option")];
+        const filterOptions = () => {
+            const query = search.value.trim().toLocaleLowerCase();
+            options.forEach(option => {
+                const selected = option.querySelector("input").checked;
+                option.hidden = !selected && !option.dataset.search.toLocaleLowerCase().includes(query);
+            });
+        };
+        search.addEventListener("input", filterOptions);
+        picker.addEventListener("change", filterOptions);
+        filterOptions();
+    });
+</script>

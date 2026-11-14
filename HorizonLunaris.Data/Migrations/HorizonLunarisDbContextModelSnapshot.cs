@@ -15,7 +15,7 @@ namespace HorizonLunaris.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.Comment", b =>
                 {
@@ -44,6 +44,22 @@ namespace HorizonLunaris.Data.Migrations
                     b.HasIndex("TaskItemId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("HorizonLunaris.Domain.Entities.EmailNotificationSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SourceEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailNotificationSettings");
                 });
 
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.Project", b =>
@@ -111,9 +127,6 @@ namespace HorizonLunaris.Data.Migrations
                     b.Property<DateTime?>("DueDateUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("OwnerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("ParentTaskId")
                         .HasColumnType("INTEGER");
 
@@ -131,8 +144,6 @@ namespace HorizonLunaris.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
 
                     b.HasIndex("ParentTaskId");
 
@@ -193,6 +204,21 @@ namespace HorizonLunaris.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TaskAssignees", b =>
+                {
+                    b.Property<int>("TaskId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("TaskId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TaskAssignees");
+                });
+
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.Comment", b =>
                 {
                     b.HasOne("HorizonLunaris.Domain.Entities.User", "Author")
@@ -244,11 +270,6 @@ namespace HorizonLunaris.Data.Migrations
 
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.TaskItem", b =>
                 {
-                    b.HasOne("HorizonLunaris.Domain.Entities.User", "Owner")
-                        .WithMany("OwnedTasks")
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("HorizonLunaris.Domain.Entities.TaskItem", "ParentTask")
                         .WithMany("SubTasks")
                         .HasForeignKey("ParentTaskId")
@@ -260,11 +281,24 @@ namespace HorizonLunaris.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
-
                     b.Navigation("ParentTask");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("TaskAssignees", b =>
+                {
+                    b.HasOne("HorizonLunaris.Domain.Entities.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HorizonLunaris.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.Project", b =>
@@ -286,8 +320,6 @@ namespace HorizonLunaris.Data.Migrations
             modelBuilder.Entity("HorizonLunaris.Domain.Entities.User", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("OwnedTasks");
                 });
 #pragma warning restore 612, 618
         }

@@ -19,6 +19,36 @@
     <div class="card error">@Model.LoadError</div>
 }
 
+@if (Model.EmailSettings is not null)
+{
+    <section class="panel email-settings">
+        <h2 class="panel-title">Status-change email notifications</h2>
+        <p>Assigned users are emailed when a task status changes. Configure SMTP credentials on the API server, then choose the source email below.</p>
+        @if (Model.EmailSettings.SmtpConfigured)
+        {
+            <p class="card success">SMTP is configured. Notifications will be sent from @Model.EmailSettings.SourceEmail.</p>
+        }
+        else
+        {
+            <p class="card error">SMTP is not configured. Set Email__Smtp__Host in the API environment; add credentials there if your provider requires authentication.</p>
+        }
+
+        @if (Model.IsProjectManager)
+        {
+            <form method="post" asp-page-handler="UpdateEmailSender" class="email-settings-form">
+                <input type="hidden" name="projectId" value="@Model.SelectedProjectId" />
+                <label for="sourceEmail">Source email address</label>
+                <input id="sourceEmail" name="SourceEmail" type="email" maxlength="254" value="@Model.EmailSettings.SourceEmail" required />
+                <button type="submit" class="btn">Link source email</button>
+            </form>
+        }
+        else
+        {
+            <p class="hint">Only a Project Manager can change the notification source email.</p>
+        }
+    </section>
+}
+
 @if (Model.Projects.Count == 0 && Model.LoadError is null)
 {
     <div class="card">No projects yet. Create one under Task Management first.</div>
@@ -39,7 +69,7 @@ else if (Model.SelectedProjectId is not null)
         </form>
         <p class="hint">
             A task stays <strong>Blocked</strong> until every prerequisite is <strong>Completed</strong>.
-            When the last one is completed, the task unlocks automatically and a notification is sent.
+            When the last one is completed, the task unlocks automatically. Assigned users receive email notifications when task statuses change.
         </p>
     </section>
 

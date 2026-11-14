@@ -79,17 +79,18 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
                    throw new BusinessRuleException("Parent task must be initiated to this project.");
                }
            }
-           // assigned project user is correct;SM
-           if (request.OwnerId.HasValue)
+           var requestedAssigneeIds = (request.AssigneeIds ?? [])
+               .Concat(request.OwnerId.HasValue ? [request.OwnerId.Value] : [])
+               .Distinct()
+               .ToArray();
+           var assignees = await db.Users
+               .Where(user => requestedAssigneeIds.Contains(user.Id))
+               .ToListAsync(ct);
+           if (assignees.Count != requestedAssigneeIds.Length)
            {
-               var owner = await db.Users.FindAsync(new object[] { request.OwnerId.Value }, ct);
-
-               if (owner == null)
-               {
-                   throw new NotFoundException("Assigned user not found in Database.");
-               }
+               throw new NotFoundException("One or more assigned users were not found.");
            }
-           // create and assign task; SM
+
            var task = new TaskItem
            {
                Title = request.Title.Trim(),
@@ -97,12 +98,11 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
                DueDateUtc = request.DueDateUtc,
                ProjectId = projectId,
                ParentTaskId = request.ParentTaskId,
-               OwnerId = request.OwnerId,
+               Assignees = assignees,
                CreatedAtUtc = DateTime.UtcNow
            };
            db.Tasks.Add(task);
            await db.SaveChangesAsync(ct);
-           await db.Entry(task).Reference(t => t.Owner).LoadAsync(ct);
 
            return task.ToDto();
        }
@@ -117,7 +117,7 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
            // find all tasks within project; SM
            var tasks = await db.Tasks
                .Where(t => t.ProjectId == projectId)
-               .Include(t => t.Owner)
+               .Include(t => t.Assignees)
                .Include(t => t.Prerequisites)
                .OrderBy(t => t.Id)
                .ToListAsync(ct);
@@ -128,7 +128,7 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
         {
             // find task by name
             var task = await db.Tasks
-                .Include(t => t.Owner)
+                .Include(t => t.Assignees)
                 .Include(t => t.Prerequisites)
                 .FirstOrDefaultAsync(t => t.Id == taskId, ct);
             // Check if the task exists
@@ -139,28 +139,38 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
             // if found, return requested task; SM
             return task.ToDto();
         }
-        public async Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default)
+        public Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default) =>
+            AssignAssigneesAsync(taskId, new AssignAssigneesRequest([request.OwnerId]), ct);
+
+        public async Task<TaskDto> AssignAssigneesAsync(
+            int taskId, AssignAssigneesRequest request, CancellationToken ct = default)
         {
-            // only access to PM;SM
             await currentUser.GetRequiredProjectManagerAsync(ct);
-            // find task by name;SM
+
             var task = await db.Tasks
+                .Include(t => t.Assignees)
                 .Include(t => t.Prerequisites)
                 .FirstOrDefaultAsync(t => t.Id == taskId, ct);
-            if (task == null)
+            if (task is null)
             {
                 throw new NotFoundException("Task not found.");
             }
-            // find user to assigne; SM
-            var owner = await db.Users.FindAsync(new object[] { request.OwnerId }, ct);
-            if (owner == null)
+
+            var requestedIds = request.AssigneeIds.Distinct().ToArray();
+            var assignees = await db.Users
+                .Where(user => requestedIds.Contains(user.Id))
+                .ToListAsync(ct);
+            if (assignees.Count != requestedIds.Length)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("One or more assigned users were not found.");
             }
-            // assign user if found
-            task.OwnerId = owner.Id;
-            task.Owner = owner;
-            // save change to DB;SM
+
+            task.Assignees.Clear();
+            foreach (var assignee in assignees)
+            {
+                task.Assignees.Add(assignee);
+            }
+
             await db.SaveChangesAsync(ct);
             return task.ToDto();
         }

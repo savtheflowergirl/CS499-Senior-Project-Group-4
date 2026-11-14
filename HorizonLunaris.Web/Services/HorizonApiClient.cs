@@ -34,6 +34,9 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
     public Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default) =>
         SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{taskId}/owner", request, ct);
 
+    public Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default) =>
+        SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{taskId}/assignees", request, ct);
+
     // ----- Feature 2 -----
     public Task<StatusUpdateResult> UpdateStatusAsync(int taskId, UpdateStatusRequest request, CancellationToken ct = default) =>
         SendAsync<StatusUpdateResult>(HttpMethod.Put, $"api/tasks/{taskId}/status", request, ct);
@@ -56,6 +59,12 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
         using var response = await http.DeleteAsync($"api/tasks/{taskId}/dependencies/{prerequisiteTaskId}", ct);
         await EnsureSuccessAsync(response, ct);
     }
+
+    public Task<EmailSenderSettingsDto> GetEmailSenderSettingsAsync(CancellationToken ct = default) =>
+        SendAsync<EmailSenderSettingsDto>(HttpMethod.Get, "api/notifications/email-settings", null, ct);
+
+    public Task<EmailSenderSettingsDto> UpdateEmailSenderSettingsAsync(UpdateEmailSenderRequest request, CancellationToken ct = default) =>
+        SendAsync<EmailSenderSettingsDto>(HttpMethod.Put, "api/notifications/email-settings", request, ct);
 
     // ----- helpers -----
     private async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken ct)

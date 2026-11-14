@@ -14,21 +14,22 @@ namespace HorizonLunaris.Api.Services;
 public class TaskProgressService(
     HorizonLunarisDbContext db,
     ICurrentUser currentUser,
-    IDependencyService dependencies) : ITaskProgressService
+    IDependencyService dependencies,
+    INotificationService notifications) : ITaskProgressService
 {
         public async Task<StatusUpdateResult> UpdateStatusAsync(
         int taskId, UpdateStatusRequest request, CancellationToken ct = default)
 {
     // find the task in DB;SM
     var task = await db.Tasks
-        .Include(t => t.Owner)
+        .Include(t => t.Assignees)
         .Include(t => t.Prerequisites)
         .FirstOrDefaultAsync(t => t.Id == taskId, ct);
     if (task == null)
         throw new NotFoundException("Task not found.");
     // make sure valid user is changing status;SM
     var user = await currentUser.GetRequiredAsync(ct);
-    if (user.Role != UserRole.ProjectManager && task.OwnerId != user.Id)
+    if (user.Role != UserRole.ProjectManager && task.Assignees.All(assignee => assignee.Id != user.Id))
         throw new ForbiddenException("You cannot change this task's status.");
     // ensure task status is availiable;SM
     if (!Enum.IsDefined(request.Status))
@@ -48,7 +49,7 @@ public class TaskProgressService(
         if (!ready)
             throw new BusinessRuleException("This task has incomplete prerequisites.");
     }
-    // else, update task and status;SM
+    var previousStatus = task.Status;
     task.Status = request.Status;
     if (request.Status == TaskItemStatus.Completed)
         task.CompletedAtUtc = DateTime.UtcNow;
@@ -59,6 +60,8 @@ public class TaskProgressService(
     IReadOnlyList<int> unlockedTaskIds = [];
     if (request.Status == TaskItemStatus.Completed)
         unlockedTaskIds = await dependencies.ResolveUnlocksAsync(taskId, ct);
+    if (previousStatus != request.Status)
+        await notifications.NotifyTaskStatusChangedAsync(task, previousStatus, request.Status, ct);
     return new StatusUpdateResult(task.ToDto(), unlockedTaskIds);
 }
 public async Task<CommentDto> AddCommentAsync(

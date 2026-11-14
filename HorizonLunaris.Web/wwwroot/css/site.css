@@ -227,6 +227,7 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 .panel label { display: block; font-size: 13px; margin: 12px 0 4px 0; }
 .panel input[type=text],
 .panel input[type=date],
+.panel input[type=search],
 .panel textarea,
 .panel select {
     width: 100%;
@@ -241,6 +242,19 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
 }
 .row-card select { background: var(--panel); }
 
+.email-settings { margin-bottom: 20px; }
+.email-settings-form { max-width: 520px; }
+.email-settings-form input[type=email] { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 8px; background: var(--control); color: var(--ink); font: inherit; }
+.email-settings-form .card { margin-top: 12px; }
+
+.assignee-form { min-width: 0; }
+.assignee-editor summary { cursor: pointer; font-size: 13px; }
+.assignee-search { width: 100%; box-sizing: border-box; margin: 8px 0; padding: 8px 10px; border: 0; border-radius: 8px; background: var(--control); color: var(--ink); font: inherit; }
+.assignee-list { max-height: 180px; overflow-y: auto; }
+.assignee-option { display: flex !important; align-items: center; gap: 8px; margin: 0 !important; padding: 5px 2px; cursor: pointer; }
+.assignee-option input[type=checkbox] { width: auto; margin: 0; }
+.assignee-option[hidden] { display: none !important; }
+
 .btn {
     margin-top: 16px;
     background: var(--bg-main);
@@ -251,6 +265,7 @@ select, button { font: inherit; padding: 0.3rem 0.6rem; }
     cursor: pointer;
 }
 .btn.small { margin-top: 0; padding: 6px 12px; font-size: 13px; }
+.calendar-link { display: inline-block; text-decoration: none; white-space: nowrap; }
 
 .badge {
     display: inline-block;
