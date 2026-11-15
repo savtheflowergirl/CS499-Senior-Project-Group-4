@@ -34,6 +34,27 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
     public Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default) =>
         SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{taskId}/owner", request, ct);
 
+    public Task<TaskDto> UpdateTaskAsync(
+        int taskId,
+        UpdateTaskRequest request,
+        CancellationToken ct = default) =>
+        SendAsync<TaskDto>(
+            HttpMethod.Put,
+            $"api/tasks/{taskId}",
+            request,
+            ct);
+
+    // Delete task; SM
+    public async Task DeleteTaskAsync(
+        int taskId,
+        CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync(
+            $"api/tasks/{taskId}", ct);
+
+        await EnsureSuccessAsync(response, ct);
+    }
+
     // ----- Feature 2 -----
     public Task<StatusUpdateResult> UpdateStatusAsync(int taskId, UpdateStatusRequest request, CancellationToken ct = default) =>
         SendAsync<StatusUpdateResult>(HttpMethod.Put, $"api/tasks/{taskId}/status", request, ct);

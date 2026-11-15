@@ -12,6 +12,11 @@ public record CreateTaskRequest(
     int? ParentTaskId,
     int? OwnerId);
 
+public record UpdateTaskRequest(
+    [param: Required, StringLength(200)] string Title,
+    [param: StringLength(4000)] string? Description,
+    DateTime? DueDateUtc);
+
 public record AssignOwnerRequest(int OwnerId);
 
 public record TaskDto(
