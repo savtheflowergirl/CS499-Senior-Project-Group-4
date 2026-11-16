@@ -1,32 +1,33 @@
 using System.Text.RegularExpressions;
+using HorizonLunaris.Contracts;
+using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HorizonLunaris.Web.Pages.UserRoles;
 
-public class IndexModel : PageModel
+public class IndexModel(IHorizonApiClient api) : HorizonPageModel(api)
 {
-    private readonly IHorizonApiClient _api;
-
-    public IndexModel(IHorizonApiClient api) => _api = api;
+    private readonly IHorizonApiClient _api = api;
 
     // GET /UserRoles?Search=ell
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
     public List<TeamMemberRow> Members { get; private set; } = new();
+    [BindProperty] public string NewName { get; set; } = "";
+    [BindProperty] public string NewEmail { get; set; } = "";
+    [BindProperty] public UserRole NewRole { get; set; } = UserRole.TeamMember;
 
     // The user chosen in the sidebar picker (same session key the API client uses)
     public int? CurrentUserId => HttpContext.Session.GetInt32(UserHeaderHandler.SessionKey);
-
-    public string? ErrorMessage { get; private set; }
 
     public async Task OnGetAsync(CancellationToken ct)
     {
         try
         {
-            var users = await _api.GetUsersAsync(ct);
+            await LoadUsersAsync(ct);
+            var users = Users;
 
             Members = users.Select(u => new TeamMemberRow
             {
@@ -55,8 +56,38 @@ public class IndexModel : PageModel
         }
     }
 
+    public async Task<IActionResult> OnPostCreateUserAsync(CancellationToken ct)
+    {
+        try
+        {
+            var user = await _api.CreateUserAsync(new CreateUserRequest(NewName, NewEmail, NewRole), ct);
+            Message = $"Created {user.Name} ({user.Email}).";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { Search });
+    }
+
+    public async Task<IActionResult> OnPostUpdateEmailAsync(int userId, string email, CancellationToken ct)
+    {
+        try
+        {
+            var user = await _api.UpdateUserEmailAsync(userId, new UpdateUserEmailRequest(email), ct);
+            Message = $"Updated {user.Name}'s email address.";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { Search });
+    }
+
     /// <summary>
-    /// Active Tasks = tasks owned by the user that have not been completed (CompletedAtUtc is null).
+    /// Active Tasks = uncompleted tasks assigned to the user.
     /// If this lookup fails, the table still renders and the column shows a dash.
     /// </summary>
     private async Task LoadActiveTaskCountsAsync(CancellationToken ct)
@@ -65,18 +96,19 @@ public class IndexModel : PageModel
         {
             var projects = await _api.GetProjectsAsync(ct);
 
-            // One call per project (fine for a prototype; an API "tasks by owner" endpoint would be better later)
+            // One call per project (fine for a prototype; an API "tasks by assignee" endpoint would be better later)
             var taskLists = await Task.WhenAll(projects.Select(p => _api.GetTasksAsync(p.Id, ct)));
 
-            var countsByOwner = taskLists
+            var countsByAssignee = taskLists
                 .SelectMany(list => list)
-                .Where(t => t.OwnerId.HasValue && t.CompletedAtUtc is null)
-                .GroupBy(t => t.OwnerId!.Value)
+                .Where(t => t.CompletedAtUtc is null)
+                .SelectMany(t => t.Assignees.Select(assignee => assignee.Id))
+                .GroupBy(userId => userId)
                 .ToDictionary(g => g.Key, g => g.Count());
 
             foreach (var m in Members)
             {
-                m.ActiveTasks = countsByOwner.TryGetValue(m.Id, out var n) ? n : 0;
+                m.ActiveTasks = countsByAssignee.TryGetValue(m.Id, out var n) ? n : 0;
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

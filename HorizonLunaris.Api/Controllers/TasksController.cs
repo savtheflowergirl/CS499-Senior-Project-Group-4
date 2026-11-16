@@ -16,4 +16,8 @@ public class TasksController(IProjectTaskService service) : ControllerBase
     [HttpPut("{taskId:int}/owner")]
     public async Task<IActionResult> AssignOwner(int taskId, AssignOwnerRequest request, CancellationToken ct) =>
         Ok(await service.AssignOwnerAsync(taskId, request, ct));
+
+    [HttpPut("{taskId:int}/assignees")]
+    public async Task<IActionResult> AssignAssignees(int taskId, AssignAssigneesRequest request, CancellationToken ct) =>
+        Ok(await service.AssignAssigneesAsync(taskId, request, ct));
 }
