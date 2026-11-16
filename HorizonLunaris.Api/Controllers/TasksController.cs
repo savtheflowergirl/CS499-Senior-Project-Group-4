@@ -1,3 +1,4 @@
+
 using HorizonLunaris.Api.Services;
 using HorizonLunaris.Contracts;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,6 @@ public class TasksController(IProjectTaskService service) : ControllerBase
         Ok(await service.AssignOwnerAsync(taskId, request, ct));
 
     // Edit an existing task; SM
-    // Edit an existing task; SM
     [HttpPut("{taskId:int}")]
     public async Task<IActionResult> UpdateTask(
         int taskId,
@@ -32,13 +32,14 @@ public class TasksController(IProjectTaskService service) : ControllerBase
         CancellationToken ct) =>
         Ok(await service.UpdateTaskAsync(taskId, request, ct));
 
-    // Delete an existing task; SM
+    // Delete a task using the selected chain deletion option; SM
     [HttpDelete("{taskId:int}")]
     public async Task<IActionResult> DeleteTask(
         int taskId,
+        [FromBody] DeleteTaskRequest request,
         CancellationToken ct)
     {
-        await service.DeleteTaskAsync(taskId, ct);
+        await service.DeleteTaskAsync(taskId, request, ct);
         return NoContent();
     }
 }

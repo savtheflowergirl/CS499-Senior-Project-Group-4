@@ -27,6 +27,7 @@ public interface IHorizonApiClient
 
     Task DeleteTaskAsync(
         int taskId,
+        DeleteTaskRequest request,
         CancellationToken ct = default);
 
     // Feature 2

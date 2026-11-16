@@ -144,17 +144,30 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         return RedirectToPage(new { id });
     }
 
-    // Delete an existing task; SM
+    // Delete task using the selected chain deletion option; SM
     public async Task<IActionResult> OnPostDeleteTaskAsync(
         int id,
         int taskId,
+        TaskDeletionMode deletionMode,
         CancellationToken ct)
     {
         try
         {
-            await Api.DeleteTaskAsync(taskId, ct);
+            // Send the selected deletion option to the API; SM
+            var request = new DeleteTaskRequest(deletionMode);
 
-            Message = "Task deleted successfully.";
+            await Api.DeleteTaskAsync(taskId, request, ct);
+
+            Message = deletionMode switch
+            {
+                TaskDeletionMode.DeleteChildren =>
+                    "Task and all its subtasks deleted successfully.",
+
+                TaskDeletionMode.KeepChildren =>
+                    "Task deleted successfully. Its subtasks were preserved.",
+
+                _ => "Task deleted successfully."
+            };
         }
         catch (Exception ex) when (
             ex is HttpRequestException or ApiException)
@@ -164,7 +177,6 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
 
         return RedirectToPage(new { id });
     }
-
 
     // ----- Feature 2 -----
 

@@ -45,13 +45,21 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
             ct);
 
     // Delete task; SM
+    // Delete a task using the selected deletion mode; SM
     public async Task DeleteTaskAsync(
         int taskId,
+        DeleteTaskRequest request,
         CancellationToken ct = default)
     {
-        using var response = await http.DeleteAsync(
-            $"api/tasks/{taskId}", ct);
+        using var message = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"api/tasks/{taskId}");
 
+        message.Content = JsonContent.Create(
+            request,
+            options: Json);
+
+        using var response = await http.SendAsync(message, ct);
         await EnsureSuccessAsync(response, ct);
     }
 
