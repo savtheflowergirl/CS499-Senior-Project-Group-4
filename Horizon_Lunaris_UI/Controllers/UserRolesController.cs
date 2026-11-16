@@ -1,17 +1,20 @@
+
 using Horizon_Lunaris_UI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Horizon_Lunaris_UI.Controllers
 {
+    [Authorize]
     public class UserRolesController : Controller
     {
         // Placeholder data until the real database / Account Management component is wired in.
         private static readonly List<TeamMember> SampleMembers = new()
         {
             new() { Name = "Savannah", Email = "savannah@example.com", Role = "Project Manager", ActiveTasks = 4 },
-            new() { Name = "Ellie",    Email = "ellie@example.com",    Role = "Developer",       ActiveTasks = 3 },
-            new() { Name = "Quan",     Email = "quan@example.com",     Role = "Developer",       ActiveTasks = 5 },
-            new() { Name = "Daniel",   Email = "daniel@example.com",   Role = "Developer",       ActiveTasks = 2 },
+            new() { Name = "Ellie", Email = "ellie@example.com", Role = "Developer", ActiveTasks = 3 },
+            new() { Name = "Quan", Email = "quan@example.com", Role = "Developer", ActiveTasks = 5 },
+            new() { Name = "Daniel", Email = "daniel@example.com", Role = "Developer", ActiveTasks = 2 }
         };
 
         // GET /UserRoles?search=ell
@@ -35,3 +38,4 @@ namespace Horizon_Lunaris_UI.Controllers
         }
     }
 }
+

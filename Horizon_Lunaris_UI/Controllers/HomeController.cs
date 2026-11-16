@@ -1,13 +1,18 @@
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Horizon_Lunaris_UI.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
-        // Dashboard (BtnDashboard)
         public IActionResult Index() => View();
 
-        // Target of UseExceptionHandler in Program.cs (non-development only)
-        public IActionResult Error() => Content("An unexpected error occurred.");
+        [AllowAnonymous]
+        public IActionResult Error()
+        {
+            return Content("An unexpected error occurred.");
+        }
     }
 }

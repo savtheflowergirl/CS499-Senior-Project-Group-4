@@ -26,6 +26,7 @@ public class HorizonLunarisDbContext : DbContext
             e.Property(u => u.Name).IsRequired().HasMaxLength(100);
             e.Property(u => u.Email).IsRequired().HasMaxLength(200);
             e.HasIndex(u => u.Email).IsUnique();
+	    e.Property(u => u.PasswordHash).HasMaxLength(500);
 
             // Store the enum as readable text in the database
             e.Property(u => u.Role).HasConversion<string>().HasMaxLength(30);
