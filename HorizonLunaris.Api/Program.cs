@@ -23,6 +23,7 @@ builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
 builder.Services.AddScoped<IProjectTaskService, ProjectTaskService>();   // Feature 1
 builder.Services.AddScoped<ITaskProgressService, TaskProgressService>(); // Feature 2
 builder.Services.AddScoped<IDependencyService, DependencyService>();     // Feature 3
+builder.Services.AddScoped<ITaskReviewService, TaskReviewService>();     // Manual Review Gate; SM
 
 var app = builder.Build();
 

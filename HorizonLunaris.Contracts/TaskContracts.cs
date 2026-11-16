@@ -25,7 +25,18 @@ public record TaskDto(
     int? ParentTaskId,
     int? OwnerId,
     string? OwnerName,
-    IReadOnlyList<int> PrerequisiteTaskIds);
+    IReadOnlyList<int> PrerequisiteTaskIds,
+    bool RequiresReview,
+    bool IsApproved,
+    DateTime? ApprovedAtUtc);
+
+    // ----- Manual Review Gate; SM -----
+
+    // Allows a Project Manager to enable or disable review.
+    public record SetReviewRequirementRequest(bool RequiresReview);
+
+    // Allows a Project Manager to approve or reject a task.
+    public record ReviewTaskRequest(bool Approved);
 
 // ----- Feature 2: status updates -----
 

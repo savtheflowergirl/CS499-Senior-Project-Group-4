@@ -1,18 +1,29 @@
+
 @page "{id:int}"
 @using HorizonLunaris.Domain.Enums
 @model HorizonLunaris.Web.Pages.Tasks.ProjectModel
+
 @{
     ViewData["Title"] = Model.Project?.Name ?? "Project";
 }
 
-<div class="header-banner">@(Model.Project?.Name ?? "Project")</div>
+<div class="header-banner">
+    @(Model.Project?.Name ?? "Project")
+</div>
 
 <p>
-    <a class="link light" asp-page="/Tasks/Index">&larr; All projects</a>
+    <a class="link light" asp-page="/Tasks/Index">
+        &larr; All projects
+    </a>
+
     @if (Model.Project is not null)
     {
         <span class="sep">|</span>
-        <a class="link light" asp-page="/Automations/Index" asp-route-projectId="@Model.Project.Id">Manage dependencies</a>
+        <a class="link light"
+           asp-page="/Automations/Index"
+           asp-route-projectId="@Model.Project.Id">
+            Manage dependencies
+        </a>
     }
 </p>
 
@@ -20,10 +31,12 @@
 {
     <div class="card success">@Model.Message</div>
 }
+
 @if (Model.ErrorMessage is not null)
 {
     <div class="card error">@Model.ErrorMessage</div>
 }
+
 @if (Model.LoadError is not null)
 {
     <div class="card error">@Model.LoadError</div>
@@ -33,7 +46,9 @@
 {
     @if (!string.IsNullOrWhiteSpace(Model.Project.Description))
     {
-        <p class="placeholder-text">@Model.Project.Description</p>
+        <p class="placeholder-text">
+            @Model.Project.Description
+        </p>
     }
 
     <div class="split">
@@ -52,63 +67,112 @@
 
             @if (Model.Rows.Count == 0)
             {
-                <div class="row-card empty">No tasks in this project yet.</div>
+                <div class="row-card empty">
+                    No tasks in this project yet.
+                </div>
             }
             else
             {
                 @foreach (var row in Model.Rows)
                 {
                     var t = row.Task;
-                    IReadOnlyList<CommentDto> commentList = Model.Comments.GetValueOrDefault(t.Id) ?? [];
+
+                    IReadOnlyList<CommentDto> commentList =
+                        Model.Comments.GetValueOrDefault(t.Id) ?? [];
 
                     <div class="row-card" id="task-@t.Id">
+
                         <div class="task-row">
+
+                            <!-- Task title -->
                             <div style="padding-left:@(row.Depth * 24)px">
-                                @if (row.Depth > 0) { <span class="subtask-mark">&#8627;</span> }
+                                @if (row.Depth > 0)
+                                {
+                                    <span class="subtask-mark">&#8627;</span>
+                                }
                                 @t.Title
                             </div>
 
-                            <!-- Status: editable for the owner or a PM, never for Blocked tasks -->
+                            <!-- Task status -->
                             <div>
                                 @if (t.Status == TaskItemStatus.Blocked)
                                 {
-                                    <span class="badge badge-blocked" title="Waiting on prerequisite tasks">Blocked</span>
+                                    <span class="badge badge-blocked"
+                                          title="Waiting on prerequisite tasks">
+                                        Blocked
+                                    </span>
                                 }
                                 else if (Model.CanChangeStatus(t))
                                 {
-                                    <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.Project.Id" class="inline-form">
-                                        <input type="hidden" name="taskId" value="@t.Id" />
+                                    <form method="post"
+                                          asp-page-handler="UpdateStatus"
+                                          asp-route-id="@Model.Project.Id"
+                                          class="inline-form">
+
+                                        <input type="hidden"
+                                               name="taskId"
+                                               value="@t.Id" />
+
                                         <select name="status">
                                             @foreach (var s in ProjectModel.StatusChoices)
                                             {
-                                                <option value="@s" selected="@(s == t.Status)">@Model.Label(s)</option>
+                                                <option value="@s"
+                                                        selected="@(s == t.Status)">
+                                                    @Model.Label(s)
+                                                </option>
                                             }
                                         </select>
-                                        <button type="submit" class="btn small">Update</button>
+
+                                        <button type="submit"
+                                                class="btn small">
+                                            Update
+                                        </button>
                                     </form>
                                 }
                                 else
                                 {
-                                    <span class="badge badge-@t.Status.ToString().ToLowerInvariant()">@Model.Label(t.Status)</span>
+                                    <span class="badge badge-@t.Status.ToString().ToLowerInvariant()">
+                                        @Model.Label(t.Status)
+                                    </span>
                                 }
                             </div>
 
+                            <!-- Task owner -->
                             <div>
                                 @if (Model.IsProjectManager)
                                 {
-                                    <form method="post" asp-page-handler="AssignOwner" asp-route-id="@Model.Project.Id" class="inline-form">
-                                        <input type="hidden" name="taskId" value="@t.Id" />
+                                    <form method="post"
+                                          asp-page-handler="AssignOwner"
+                                          asp-route-id="@Model.Project.Id"
+                                          class="inline-form">
+
+                                        <input type="hidden"
+                                               name="taskId"
+                                               value="@t.Id" />
+
                                         <select name="ownerId">
                                             @if (t.OwnerId is null)
                                             {
-                                                <option value="" selected disabled>Unassigned</option>
+                                                <option value=""
+                                                        selected
+                                                        disabled>
+                                                    Unassigned
+                                                </option>
                                             }
+
                                             @foreach (var u in Model.Users)
                                             {
-                                                <option value="@u.Id" selected="@(u.Id == t.OwnerId)">@u.Name</option>
+                                                <option value="@u.Id"
+                                                        selected="@(u.Id == t.OwnerId)">
+                                                    @u.Name
+                                                </option>
                                             }
                                         </select>
-                                        <button type="submit" class="btn small">Assign</button>
+
+                                        <button type="submit"
+                                                class="btn small">
+                                            Assign
+                                        </button>
                                     </form>
                                 }
                                 else
@@ -117,37 +181,220 @@
                                 }
                             </div>
 
-                            <div>@(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")</div>
+                            <!-- Due date -->
+                            <div>
+                                @(t.DueDateUtc?.ToString("yyyy-MM-dd") ?? "\u2014")
+                            </div>
 
-                            <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => Model.TitleOf(i))))</div>
+                            <!-- Dependencies -->
+                            <div>
+                                @(t.PrerequisiteTaskIds.Count == 0
+                                    ? "\u2014"
+                                    : string.Join(", ",
+                                        t.PrerequisiteTaskIds.Select(
+                                            i => Model.TitleOf(i))))
+                            </div>
+
+                        </div>
+
+                        <!-- MANUAL REVIEW GATE; SM -->
+                        <div style="padding:12px 16px;
+                                    margin-top:8px;
+                                    border-top:1px solid #555;">
+
+                            <div style="display:flex;
+                                        align-items:center;
+                                        gap:10px;
+                                        flex-wrap:wrap;">
+
+                                <strong>Manual Review:</strong>
+
+                                @if (!t.RequiresReview)
+                                {
+                                    <span class="badge">
+                                        Not Required
+                                    </span>
+                                }
+                                else if (Model.IsPendingReview(t))
+                                {
+                                    <span class="badge badge-blocked">
+                                        Pending Review
+                                    </span>
+                                }
+                                else if (t.IsApproved)
+                                {
+                                    <span class="badge">
+                                        Approved
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge">
+                                        Review Required
+                                    </span>
+                                }
+
+                                <!-- PM controls review requirement -->
+                                @if (Model.CanConfigureReview(t))
+                                {
+                                    <form method="post"
+                                          asp-page-handler="SetReviewRequirement"
+                                          asp-route-id="@Model.Project.Id"
+                                          class="inline-form">
+
+                                        <input type="hidden"
+                                               name="taskId"
+                                               value="@t.Id" />
+
+                                        @if (t.RequiresReview)
+                                        {
+                                            <input type="hidden"
+                                                   name="requiresReview"
+                                                   value="false" />
+
+                                            <button type="submit"
+                                                    class="btn small">
+                                                Disable Review
+                                            </button>
+                                        }
+                                        else if (t.Status != TaskItemStatus.Completed)
+                                        {
+                                            <input type="hidden"
+                                                   name="requiresReview"
+                                                   value="true" />
+
+                                            <button type="submit"
+                                                    class="btn small">
+                                                Require Review
+                                            </button>
+                                        }
+                                    </form>
+                                }
+                            </div>
+
+                            <!-- PM approval and rejection -->
+                            @if (Model.CanReviewTask(t))
+                            {
+                                <div style="display:flex;
+                                            gap:8px;
+                                            flex-wrap:wrap;
+                                            margin-top:10px;">
+
+                                    @if (!t.IsApproved)
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="ReviewTask"
+                                              asp-route-id="@Model.Project.Id">
+
+                                            <input type="hidden"
+                                                   name="taskId"
+                                                   value="@t.Id" />
+
+                                            <input type="hidden"
+                                                   name="approved"
+                                                   value="true" />
+
+                                            <button type="submit"
+                                                    class="btn small">
+                                                Approve
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <form method="post"
+                                          asp-page-handler="ReviewTask"
+                                          asp-route-id="@Model.Project.Id">
+
+                                        <input type="hidden"
+                                               name="taskId"
+                                               value="@t.Id" />
+
+                                        <input type="hidden"
+                                               name="approved"
+                                               value="false" />
+
+                                        <button type="submit"
+                                                class="btn small">
+                                            Reject
+                                        </button>
+                                    </form>
+
+                                </div>
+                            }
+
+                            @if (t.IsApproved && t.ApprovedAtUtc.HasValue)
+                            {
+                                <p class="hint" style="margin-top:8px;">
+                                    Approved:
+                                    @t.ApprovedAtUtc.Value.ToLocalTime().ToString("g")
+                                </p>
+                            }
+
+                            @if (Model.IsPendingReview(t))
+                            {
+                                <p class="hint" style="margin-top:8px;">
+                                    This task is completed but awaiting
+                                    Project Manager approval. Dependent tasks
+                                    remain blocked until approved.
+                                </p>
+                            }
+
                         </div>
 
                         <!-- Progress comments -->
-                        <details class="comments" open="@(Model.Open == t.Id)">
-                            <summary>Comments (@commentList.Count)</summary>
+                        <details class="comments"
+                                 open="@(Model.Open == t.Id)">
+
+                            <summary>
+                                Comments (@commentList.Count)
+                            </summary>
 
                             @foreach (var c in commentList)
                             {
                                 <div class="comment">
                                     <strong>@c.AuthorName</strong>
-                                    <span class="when">@c.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+
+                                    <span class="when">
+                                        @c.CreatedAtUtc.ToLocalTime().ToString("g")
+                                    </span>
+
                                     <div>@c.Text</div>
                                 </div>
                             }
 
                             @if (Model.CurrentUser is null)
                             {
-                                <p class="hint">Choose who you are in the sidebar to comment.</p>
+                                <p class="hint">
+                                    Choose who you are in the sidebar
+                                    to comment.
+                                </p>
                             }
                             else
                             {
-                                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Project.Id" class="comment-form">
-                                    <input type="hidden" name="taskId" value="@t.Id" />
-                                    <textarea name="text" rows="2" maxlength="2000" placeholder="Add a progress comment" required></textarea>
-                                    <button type="submit" class="btn small">Post comment</button>
+                                <form method="post"
+                                      asp-page-handler="AddComment"
+                                      asp-route-id="@Model.Project.Id"
+                                      class="comment-form">
+
+                                    <input type="hidden"
+                                           name="taskId"
+                                           value="@t.Id" />
+
+                                    <textarea name="text"
+                                              rows="2"
+                                              maxlength="2000"
+                                              placeholder="Add a progress comment"
+                                              required></textarea>
+
+                                    <button type="submit"
+                                            class="btn small">
+                                        Post comment
+                                    </button>
                                 </form>
                             }
+
                         </details>
+
                     </div>
                 }
             }
@@ -159,43 +406,76 @@
 
             @if (Model.CurrentUser is null)
             {
-                <p class="hint">Choose who you are in the sidebar first.</p>
+                <p class="hint">
+                    Choose who you are in the sidebar first.
+                </p>
             }
             else if (!Model.IsProjectManager)
             {
-                <p class="hint">Only a Project Manager can create tasks and assign owners. Switch to the Project Manager in the sidebar.</p>
+                <p class="hint">
+                    Only a Project Manager can create tasks and
+                    assign owners. Switch to the Project Manager
+                    in the sidebar.
+                </p>
             }
             else
             {
-                <form method="post" asp-page-handler="CreateTask" asp-route-id="@Model.Project.Id">
-                    <label asp-for="NewTask.Title">Title</label>
-                    <input type="text" asp-for="NewTask.Title" maxlength="200" required />
+                <form method="post"
+                      asp-page-handler="CreateTask"
+                      asp-route-id="@Model.Project.Id">
 
-                    <label asp-for="NewTask.Description">Description</label>
-                    <textarea asp-for="NewTask.Description" rows="3" maxlength="4000"></textarea>
+                    <label asp-for="NewTask.Title">
+                        Title
+                    </label>
+                    <input type="text"
+                           asp-for="NewTask.Title"
+                           maxlength="200"
+                           required />
 
-                    <label asp-for="NewTask.DueDate">Due date</label>
-                    <input type="date" asp-for="NewTask.DueDate" />
+                    <label asp-for="NewTask.Description">
+                        Description
+                    </label>
+                    <textarea asp-for="NewTask.Description"
+                              rows="3"
+                              maxlength="4000"></textarea>
 
-                    <label asp-for="NewTask.ParentTaskId">Parent task (makes this a sub-task)</label>
+                    <label asp-for="NewTask.DueDate">
+                        Due date
+                    </label>
+                    <input type="date"
+                           asp-for="NewTask.DueDate" />
+
+                    <label asp-for="NewTask.ParentTaskId">
+                        Parent task (makes this a sub-task)
+                    </label>
                     <select asp-for="NewTask.ParentTaskId">
                         <option value="">None</option>
+
                         @foreach (var pt in Model.Tasks)
                         {
-                            <option value="@pt.Id">@pt.Title</option>
+                            <option value="@pt.Id">
+                                @pt.Title
+                            </option>
                         }
                     </select>
 
-                    <label asp-for="NewTask.OwnerId">Owner</label>
+                    <label asp-for="NewTask.OwnerId">
+                        Owner
+                    </label>
                     <select asp-for="NewTask.OwnerId">
                         <option value="">Unassigned</option>
+
                         @foreach (var u in Model.Users)
                         {
-                            <option value="@u.Id">@u.Name</option>
+                            <option value="@u.Id">
+                                @u.Name
+                            </option>
                         }
                     </select>
 
-                    <button type="submit" class="btn">Create task</button>
+                    <button type="submit" class="btn">
+                        Create task
+                    </button>
                 </form>
             }
         </aside>

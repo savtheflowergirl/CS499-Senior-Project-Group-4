@@ -1,3 +1,4 @@
+
 using System.Net.Http.Json;
 using System.Text.Json;
 using HorizonLunaris.Contracts;
@@ -56,6 +57,27 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
         using var response = await http.DeleteAsync($"api/tasks/{taskId}/dependencies/{prerequisiteTaskId}", ct);
         await EnsureSuccessAsync(response, ct);
     }
+
+    // ----- Manual Review Gate; SM -----
+    public Task<TaskDto> SetReviewRequirementAsync(
+        int taskId,
+        SetReviewRequirementRequest request,
+        CancellationToken ct = default) =>
+        SendAsync<TaskDto>(
+            HttpMethod.Put,
+            $"api/tasks/{taskId}/review-requirement",
+            request,
+            ct);
+
+    public Task<TaskDto> ReviewTaskAsync(
+        int taskId,
+        ReviewTaskRequest request,
+        CancellationToken ct = default) =>
+        SendAsync<TaskDto>(
+            HttpMethod.Post,
+            $"api/tasks/{taskId}/review",
+            request,
+            ct);
 
     // ----- helpers -----
     private async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken ct)
