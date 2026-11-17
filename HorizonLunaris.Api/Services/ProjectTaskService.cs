@@ -174,4 +174,92 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
             await db.SaveChangesAsync(ct);
             return task.ToDto();
         }
+        public async Task<TaskDto> UpdateTaskAsync(
+            int taskId,
+            UpdateTaskRequest request,
+            CancellationToken ct = default)
+        {
+            // Only Project Managers can edit tasks; SM
+            await currentUser.GetRequiredProjectManagerAsync(ct);
+
+            // Find the requested task; SM
+            var task = await db.Tasks
+                .Include(t => t.Owner)
+                .Include(t => t.Prerequisites)
+                .FirstOrDefaultAsync(t => t.Id == taskId, ct);
+
+            if (task == null)
+            {
+                throw new NotFoundException("Task not found.");
+            }
+
+            // Validate the updated title; SM
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                throw new BusinessRuleException("Task title cannot be empty.");
+            }
+
+            if (request.Title.Trim().Length > 200)
+            {
+                throw new BusinessRuleException("Task title is too long.");
+            }
+
+            if (request.Description?.Length > 4000)
+            {
+                throw new BusinessRuleException("Task description is too long.");
+            }
+
+            // Update task information; SM
+            task.Title = request.Title.Trim();
+            task.Description = request.Description;
+            task.DueDateUtc = request.DueDateUtc;
+
+            // Save changes to database; SM
+            await db.SaveChangesAsync(ct);
+
+            return task.ToDto();
+        }
+        // Delete an existing task; SM
+        public async Task DeleteTaskAsync(
+            int taskId,
+            CancellationToken ct = default)
+        {
+            // Only Project Managers can delete tasks; SM
+            await currentUser.GetRequiredProjectManagerAsync(ct);
+
+            // Find the task in database; SM
+            var task = await db.Tasks
+                .FirstOrDefaultAsync(t => t.Id == taskId, ct);
+
+            if (task == null)
+            {
+                throw new NotFoundException("Task not found.");
+            }
+
+            // Check for existing subtasks; SM
+            var hasSubTasks = await db.Tasks
+                .AnyAsync(t => t.ParentTaskId == taskId, ct);
+
+            if (hasSubTasks)
+            {
+                throw new BusinessRuleException(
+                    "Cannot delete a task that has subtasks.");
+            }
+
+            // Check for any dependencies involving this task; SM
+            var hasDependencies = await db.TaskDependencies
+                .AnyAsync(d =>
+                    d.DependentTaskId == taskId ||
+                    d.PrerequisiteTaskId == taskId, ct);
+
+            if (hasDependencies)
+            {
+                throw new BusinessRuleException(
+                    "Cannot delete a task with existing dependencies.");
+            }
+
+            // Remove task from database; SM
+            db.Tasks.Remove(task);
+            await db.SaveChangesAsync(ct);
+        }
 }

@@ -13,6 +13,11 @@ public record CreateTaskRequest(
     int? OwnerId,
     IReadOnlyList<int>? AssigneeIds = null);
 
+public record UpdateTaskRequest(
+    [param: Required, StringLength(200)] string Title,
+    [param: StringLength(4000)] string? Description,
+    DateTime? DueDateUtc);
+
 public record AssignOwnerRequest(int OwnerId);
 public record AssignAssigneesRequest([param: Required] IReadOnlyList<int> AssigneeIds);
 public record AssigneeDto(int Id, string Name);

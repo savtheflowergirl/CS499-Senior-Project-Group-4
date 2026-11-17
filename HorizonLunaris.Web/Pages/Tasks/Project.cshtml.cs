@@ -115,6 +115,70 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         return RedirectToPage(new { id });
     }
 
+    // Edit an existing task; SM
+    public async Task<IActionResult> OnPostEditTaskAsync(
+        int id,
+        int taskId,
+        string title,
+        string? description,
+        DateTime? dueDate,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            ErrorMessage = "Task title is required.";
+            return RedirectToPage(new { id });
+        }
+
+        try
+        {
+            DateTime? dueUtc = dueDate is { } d
+                ? DateTime.SpecifyKind(d.Date, DateTimeKind.Utc)
+                : null;
+
+            var request = new UpdateTaskRequest(
+                title.Trim(),
+                string.IsNullOrWhiteSpace(description)
+                    ? null
+                    : description.Trim(),
+                dueUtc);
+
+            var task = await Api.UpdateTaskAsync(
+                taskId, request, ct);
+
+            Message = $"Task \"{task.Title}\" updated successfully.";
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    // Delete an existing task; SM
+    public async Task<IActionResult> OnPostDeleteTaskAsync(
+        int id,
+        int taskId,
+        CancellationToken ct)
+    {
+        try
+        {
+            await Api.DeleteTaskAsync(taskId, ct);
+
+            Message = "Task deleted successfully.";
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+
     // ----- Feature 2 -----
 
     public async Task<IActionResult> OnPostUpdateStatusAsync(int id, int taskId, TaskItemStatus status, CancellationToken ct)

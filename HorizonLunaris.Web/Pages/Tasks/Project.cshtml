@@ -135,6 +135,38 @@
                             <div>@(t.PrerequisiteTaskIds.Count == 0 ? "\u2014" : string.Join(", ", t.PrerequisiteTaskIds.Select(i => Model.TitleOf(i))))</div>
                         </div>
 
+                        <!-- Edit and delete tasks; Project Managers only -->
+                        @if (Model.IsProjectManager)
+                        {
+                            <div style="margin-top: 12px; margin-bottom: 12px;">
+                                <details class="comments">
+                                    <summary>Edit Task</summary>
+
+                                    <form method="post" asp-page-handler="EditTask" asp-route-id="@Model.Project.Id">
+                                        <input type="hidden" name="taskId" value="@t.Id" />
+
+                                        <label for="edit-title-@t.Id">Task Title</label>
+                                        <input id="edit-title-@t.Id" type="text" name="title" value="@t.Title" maxlength="200" required />
+
+                                        <label for="edit-description-@t.Id">Description</label>
+                                        <textarea id="edit-description-@t.Id" name="description" rows="3" maxlength="4000">@t.Description</textarea>
+
+                                        <label for="edit-due-date-@t.Id">Due Date</label>
+                                        <input id="edit-due-date-@t.Id" type="date" name="dueDate" value="@(t.DueDateUtc?.ToString("yyyy-MM-dd"))" />
+
+                                        <button type="submit" class="btn small">Save Changes</button>
+                                    </form>
+                                </details>
+
+                                <form method="post" asp-page-handler="DeleteTask" asp-route-id="@Model.Project.Id"
+                                      onsubmit="return confirm('Delete this task? Its comments will also be deleted.');"
+                                      style="margin-top: 8px;">
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <button type="submit" class="btn small">Delete Task</button>
+                                </form>
+                            </div>
+                        }
+
                         <!-- Progress comments -->
                         <details class="comments" open="@(Model.Open == t.Id)">
                             <summary>Comments (@commentList.Count)</summary>

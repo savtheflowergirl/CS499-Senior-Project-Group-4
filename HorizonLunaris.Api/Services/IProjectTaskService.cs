@@ -13,5 +13,9 @@ public interface IProjectTaskService
     Task<IReadOnlyList<TaskDto>> GetTasksAsync(int projectId, CancellationToken ct = default);
     Task<TaskDto> GetTaskAsync(int taskId, CancellationToken ct = default);
     Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default);
+    Task<TaskDto> UpdateTaskAsync(int taskId,UpdateTaskRequest request,CancellationToken ct = default);
+    Task DeleteTaskAsync(
+        int taskId,
+        CancellationToken ct = default);
     Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default);
 }

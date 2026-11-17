@@ -21,6 +21,15 @@ public interface IHorizonApiClient
     Task<TaskDto> CreateTaskAsync(int projectId, CreateTaskRequest request, CancellationToken ct = default);
     Task<TaskDto> GetTaskAsync(int taskId, CancellationToken ct = default);
     Task<TaskDto> AssignOwnerAsync(int taskId, AssignOwnerRequest request, CancellationToken ct = default);
+    // Task editing and deletion; SM
+    Task<TaskDto> UpdateTaskAsync(
+        int taskId,
+        UpdateTaskRequest request,
+        CancellationToken ct = default);
+
+    Task DeleteTaskAsync(
+        int taskId,
+        CancellationToken ct = default);
     Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default);
 
     // Feature 2
