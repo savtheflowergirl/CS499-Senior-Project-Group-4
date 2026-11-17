@@ -42,6 +42,17 @@ public interface IHorizonApiClient
     Task<IReadOnlyList<TaskDto>> GetPrerequisitesAsync(int taskId, CancellationToken ct = default);
     Task<TaskDto> AddDependencyAsync(int taskId, AddDependencyRequest request, CancellationToken ct = default);
     Task RemoveDependencyAsync(int taskId, int prerequisiteTaskId, CancellationToken ct = default);
+
+    // Manual Review Gate; SM
+    Task<TaskDto> SetReviewRequirementAsync(
+        int taskId,
+        SetReviewRequirementRequest request,
+        CancellationToken ct = default);
+
+    Task<TaskDto> ReviewTaskAsync(
+        int taskId,
+        ReviewTaskRequest request,
+        CancellationToken ct = default);
     Task<EmailSenderSettingsDto> GetEmailSenderSettingsAsync(CancellationToken ct = default);
     Task<EmailSenderSettingsDto> UpdateEmailSenderSettingsAsync(UpdateEmailSenderRequest request, CancellationToken ct = default);
 }

@@ -114,6 +114,9 @@ namespace HorizonLunaris.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("TEXT");
 
@@ -127,10 +130,19 @@ namespace HorizonLunaris.Data.Migrations
                     b.Property<DateTime?>("DueDateUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ParentTaskId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RequiresReview")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")

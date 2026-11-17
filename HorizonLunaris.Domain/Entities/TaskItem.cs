@@ -21,6 +21,17 @@ public class TaskItem
     public DateTime? DueDateUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
 
+    // ----- Manual Review Gate; SM -----
+
+    // Project Manager chooses whether this task needs approval.
+    public bool RequiresReview { get; set; } = false;
+
+    // True only after a Project Manager approves the completed task.
+    public bool IsApproved { get; set; } = false;
+
+    // Records when the task received approval.
+    public DateTime? ApprovedAtUtc { get; set; }
+
     public int ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 

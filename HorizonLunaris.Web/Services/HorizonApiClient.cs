@@ -1,3 +1,4 @@
+
 using System.Net.Http.Json;
 using System.Text.Json;
 using HorizonLunaris.Contracts;
@@ -94,6 +95,26 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
         await EnsureSuccessAsync(response, ct);
     }
 
+    // ----- Manual Review Gate; SM -----
+    public Task<TaskDto> SetReviewRequirementAsync(
+        int taskId,
+        SetReviewRequirementRequest request,
+        CancellationToken ct = default) =>
+        SendAsync<TaskDto>(
+            HttpMethod.Put,
+            $"api/tasks/{taskId}/review-requirement",
+            request,
+            ct);
+
+    public Task<TaskDto> ReviewTaskAsync(
+        int taskId,
+        ReviewTaskRequest request,
+        CancellationToken ct = default) =>
+        SendAsync<TaskDto>(
+            HttpMethod.Post,
+            $"api/tasks/{taskId}/review",
+            request,
+            ct);
     public Task<EmailSenderSettingsDto> GetEmailSenderSettingsAsync(CancellationToken ct = default) =>
         SendAsync<EmailSenderSettingsDto>(HttpMethod.Get, "api/notifications/email-settings", null, ct);
 

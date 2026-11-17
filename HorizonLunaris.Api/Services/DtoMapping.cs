@@ -1,3 +1,4 @@
+
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Domain.Entities;
 
@@ -8,7 +9,8 @@ namespace HorizonLunaris.Api.Services;
 /// </summary>
 public static class DtoMapping
 {
-    public static UserDto ToDto(this User u) => new(u.Id, u.Name, u.Email, u.Role);
+    public static UserDto ToDto(this User u) =>
+        new(u.Id, u.Name, u.Email, u.Role);
 
     public static ProjectDto ToDto(this Project p) =>
         new(p.Id, p.Name, p.Description, p.CreatedAtUtc, p.CreatedById);
@@ -22,7 +24,10 @@ public static class DtoMapping
 
         return new TaskDto(t.Id, t.Title, t.Description, t.Status, t.DueDateUtc, t.CompletedAtUtc,
             t.ProjectId, t.ParentTaskId, assignees.FirstOrDefault()?.Id, assignees.FirstOrDefault()?.Name,
-            t.Prerequisites.Select(d => d.PrerequisiteTaskId).ToList(), assignees);
+            t.Prerequisites.Select(d => d.PrerequisiteTaskId).ToList(), assignees)
+            t.RequiresReview,
+            t.IsApproved,
+            t.ApprovedAtUtc);
     }
 
     public static CommentDto ToDto(this Comment c) =>

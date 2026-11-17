@@ -1,3 +1,4 @@
+
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Data;
 using HorizonLunaris.Domain.Entities;
@@ -7,11 +8,17 @@ using Microsoft.EntityFrameworkCore;
 namespace HorizonLunaris.Api.Services;
 
 // FEATURE 3: dependencies between tasks.
+// Updated to support optional Manual Review Gates; SM
 public class DependencyService(
     HorizonLunarisDbContext db,
     ICurrentUser currentUser,
     INotificationService notifications) : IDependencyService
 {
+    // A prerequisite is satisfied when completed and, if required, approved.
+    private static bool IsPrerequisiteSatisfied(TaskItem task) =>
+        task.Status == TaskItemStatus.Completed &&
+        (!task.RequiresReview || task.IsApproved);
+
     public async Task<IReadOnlyList<TaskDto>> GetPrerequisitesAsync(
         int taskId,
         CancellationToken ct = default)
@@ -83,7 +90,7 @@ public class DependencyService(
         if (dependency is null)
         {
             throw new NotFoundException(
-                $"Dependency from task {taskId} to task {prerequisiteTaskId} was not found.");
+                $"Dependency from task {taskId} to {prerequisiteTaskId} was not found.");
         }
 
         var dependentTask = dependency.DependentTask;
@@ -107,7 +114,10 @@ public class DependencyService(
                         dependencyRow => dependencyRow.PrerequisiteTaskId,
                         prerequisite => prerequisite.Id,
                         (_, prerequisite) => prerequisite)
-                    .AnyAsync(t => t.Status != TaskItemStatus.Completed, ct);
+                    .AnyAsync(t =>
+                        t.Status != TaskItemStatus.Completed ||
+                        (t.RequiresReview && !t.IsApproved),
+                        ct);
 
             if (!hasIncompletePrerequisite)
             {
@@ -141,20 +151,29 @@ public class DependencyService(
                 dependency => dependency.PrerequisiteTaskId,
                 prerequisite => prerequisite.Id,
                 (_, prerequisite) => prerequisite)
-            .AnyAsync(t => t.Status != TaskItemStatus.Completed, ct);
+            .AnyAsync(t =>
+                t.Status != TaskItemStatus.Completed ||
+                (t.RequiresReview && !t.IsApproved),
+                ct);
     }
 
     public async Task<IReadOnlyList<int>> ResolveUnlocksAsync(
         int completedTaskId,
         CancellationToken ct = default)
     {
-        var completedTaskExists = await db.Tasks
-            .AnyAsync(t => t.Id == completedTaskId, ct);
+        var completedTask = await db.Tasks
+            .SingleOrDefaultAsync(t => t.Id == completedTaskId, ct);
 
-        if (!completedTaskExists)
+        if (completedTask is null)
         {
             throw new NotFoundException(
                 $"Completed task {completedTaskId} was not found.");
+        }
+
+        // Do not unlock dependents while this task awaits approval; SM
+        if (!IsPrerequisiteSatisfied(completedTask))
+        {
+            return [];
         }
 
         var dependentTasks = await db.Tasks
@@ -169,10 +188,11 @@ public class DependencyService(
         foreach (var dependentTask in dependentTasks
                      .Where(t => t.Status == TaskItemStatus.Blocked))
         {
-            var allPrerequisitesCompleted = dependentTask.Prerequisites
-                .All(d => d.PrerequisiteTask.Status == TaskItemStatus.Completed);
+            // Every prerequisite must be completed and approved if required; SM
+            var allPrerequisitesSatisfied = dependentTask.Prerequisites
+                .All(d => IsPrerequisiteSatisfied(d.PrerequisiteTask));
 
-            if (!allPrerequisitesCompleted)
+            if (!allPrerequisitesSatisfied)
             {
                 continue;
             }
@@ -235,9 +255,9 @@ public class DependencyService(
             PrerequisiteTask = prerequisiteTask
         });
 
-
+        // Block dependent tasks if the prerequisite is not yet satisfied; SM
         if (dependentTask.Status == TaskItemStatus.Available &&
-            prerequisiteTask.Status != TaskItemStatus.Completed)
+            !IsPrerequisiteSatisfied(prerequisiteTask))
         {
             dependentTask.Status = TaskItemStatus.Blocked;
         }
