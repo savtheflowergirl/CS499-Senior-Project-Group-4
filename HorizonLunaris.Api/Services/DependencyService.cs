@@ -26,7 +26,7 @@ public class DependencyService(
         var task = await db.Tasks
             .Include(t => t.Prerequisites)
                 .ThenInclude(d => d.PrerequisiteTask)
-                    .ThenInclude(t => t.Owner)
+                    .ThenInclude(t => t.Assignees)
             .SingleOrDefaultAsync(t => t.Id == taskId, ct);
 
         if (task is null)
@@ -47,7 +47,7 @@ public class DependencyService(
         await currentUser.GetRequiredProjectManagerAsync(ct);
 
         var dependentTask = await db.Tasks
-            .Include(t => t.Owner)
+            .Include(t => t.Assignees)
             .Include(t => t.Prerequisites)
             .SingleOrDefaultAsync(t => t.Id == taskId, ct);
 
@@ -178,7 +178,7 @@ public class DependencyService(
 
         var dependentTasks = await db.Tasks
             .Where(t => t.Prerequisites.Any(d => d.PrerequisiteTaskId == completedTaskId))
-            .Include(t => t.Owner)
+            .Include(t => t.Assignees)
             .Include(t => t.Prerequisites)
                 .ThenInclude(d => d.PrerequisiteTask)
             .ToListAsync(ct);

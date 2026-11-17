@@ -3,16 +3,35 @@ using HorizonLunaris.Domain.Enums;
 
 namespace HorizonLunaris.Contracts;
 
-// ----- Feature 1: tasks and ownership -----
+// ----- Feature 1: tasks and assignments -----
 
 public record CreateTaskRequest(
     [param: Required, StringLength(200)] string Title,
     [param: StringLength(4000)] string? Description,
     DateTime? DueDateUtc,
     int? ParentTaskId,
-    int? OwnerId);
+    int? OwnerId,
+    IReadOnlyList<int>? AssigneeIds = null);
+
+public record UpdateTaskRequest(
+    [param: Required, StringLength(200)] string Title,
+    [param: StringLength(4000)] string? Description,
+    DateTime? DueDateUtc);
+
+// ----- Chain deletion options; SM -----
+
+public enum TaskDeletionMode
+{
+    TaskOnly,
+    DeleteChildren,
+    KeepChildren
+}
+
+public record DeleteTaskRequest(TaskDeletionMode Mode);
 
 public record AssignOwnerRequest(int OwnerId);
+public record AssignAssigneesRequest([param: Required] IReadOnlyList<int> AssigneeIds);
+public record AssigneeDto(int Id, string Name);
 
 public record TaskDto(
     int Id,
@@ -37,6 +56,7 @@ public record TaskDto(
 
     // Allows a Project Manager to approve or reject a task.
     public record ReviewTaskRequest(bool Approved);
+    IReadOnlyList<AssigneeDto> Assignees);
 
 // ----- Feature 2: status updates -----
 

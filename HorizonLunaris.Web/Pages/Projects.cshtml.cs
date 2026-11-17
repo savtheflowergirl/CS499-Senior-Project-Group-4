@@ -58,12 +58,12 @@ public class ProjectsModel(IHorizonApiClient api) : PageModel
     // creatse a task or subtask; SM
     public async Task<IActionResult> OnPostCreateTaskAsync(
         int projectId, string title, string? description,
-        int? parentTaskId, int? ownerId)
+        int? parentTaskId, int[]? assigneeIds)
     {
         try
         {
             var request = new CreateTaskRequest(
-                title, description, null, parentTaskId, ownerId);
+                title, description, null, parentTaskId, null, assigneeIds ?? []);
             await api.CreateTaskAsync(projectId, request);
             return RedirectToPage(new { projectId });
         }
@@ -75,13 +75,12 @@ public class ProjectsModel(IHorizonApiClient api) : PageModel
             return Page();
         }
     }
-    // assign/reassign a task to user, SM
-    public async Task<IActionResult> OnPostAssignOwnerAsync(
-        int projectId, int taskId, int ownerId)
+    public async Task<IActionResult> OnPostAssignAssigneesAsync(
+        int projectId, int taskId, int[]? assigneeIds)
     {
         try
         {
-            await api.AssignOwnerAsync(taskId, new AssignOwnerRequest(ownerId));
+            await api.AssignAssigneesAsync(taskId, new AssignAssigneesRequest(assigneeIds ?? []));
             return RedirectToPage(new { projectId });
         }
         catch (Exception ex) when (ex is ApiException or HttpRequestException)
