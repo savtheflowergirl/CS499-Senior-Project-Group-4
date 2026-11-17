@@ -8,15 +8,16 @@ namespace HorizonLunaris.Tests;
 public class DbContextSmokeTests
 {
     [Fact]
-    public void SeedData_HasOneProjectManagerAndTwoTeamMembers()
+    public void SeedData_HasProjectManagerTeamMembersAndAdmin()
     {
         using var db = new TestDb();
 
         var users = db.Context.Users.ToList();
 
-        Assert.Equal(3, users.Count);
+        Assert.Equal(4, users.Count);
         Assert.Single(users, u => u.Role == UserRole.ProjectManager);
         Assert.Equal(2, users.Count(u => u.Role == UserRole.TeamMember));
+        Assert.Single(users, u => u.Role == UserRole.Admin);
     }
 
     [Fact]

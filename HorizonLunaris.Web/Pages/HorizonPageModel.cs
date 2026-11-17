@@ -16,7 +16,8 @@ public abstract class HorizonPageModel(IHorizonApiClient api) : PageModel
 
     public IReadOnlyList<UserDto> Users { get; private set; } = [];
     public UserDto? CurrentUser { get; private set; }
-    public bool IsProjectManager => CurrentUser?.Role == UserRole.ProjectManager;
+    public bool IsProjectManager => CurrentUser?.Role is UserRole.ProjectManager or UserRole.Admin;
+    public bool IsAdmin => CurrentUser?.Role == UserRole.Admin;
 
     // Shown once after a POST -> redirect
     [TempData] public string? Message { get; set; }

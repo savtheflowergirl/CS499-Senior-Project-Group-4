@@ -29,9 +29,7 @@ public class TaskItem
     public TaskItem? ParentTask { get; set; }
     public ICollection<TaskItem> SubTasks { get; set; } = new List<TaskItem>();
 
-    // Assigned owner (optional until assigned)
-    public int? OwnerId { get; set; }
-    public User? Owner { get; set; }
+    public ICollection<User> Assignees { get; set; } = new List<User>();
 
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 

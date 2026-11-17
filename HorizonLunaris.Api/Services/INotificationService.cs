@@ -1,9 +1,11 @@
 using HorizonLunaris.Domain.Entities;
+using HorizonLunaris.Domain.Enums;
 
 namespace HorizonLunaris.Api.Services;
 
-/// <summary>The "External Email Service" in the design. Stubbed for the prototype.</summary>
 public interface INotificationService
 {
     Task NotifyTaskAvailableAsync(TaskItem task, CancellationToken ct = default);
+    Task NotifyTaskStatusChangedAsync(
+        TaskItem task, TaskItemStatus previousStatus, TaskItemStatus newStatus, CancellationToken ct = default);
 }

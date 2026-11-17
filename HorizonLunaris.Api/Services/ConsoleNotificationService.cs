@@ -1,4 +1,5 @@
 using HorizonLunaris.Domain.Entities;
+using HorizonLunaris.Domain.Enums;
 
 namespace HorizonLunaris.Api.Services;
 
@@ -7,9 +8,21 @@ public class ConsoleNotificationService(ILogger<ConsoleNotificationService> logg
 {
     public Task NotifyTaskAvailableAsync(TaskItem task, CancellationToken ct = default)
     {
+        var assignees = task.Assignees.Count == 0
+            ? "unassigned"
+            : string.Join(", ", task.Assignees.Select(user => user.Name));
         logger.LogInformation(
-            "[NOTIFY] Task {TaskId} \"{Title}\" is now Available. Owner: {Owner}",
-            task.Id, task.Title, task.Owner?.Name ?? "unassigned");
+            "[NOTIFY] Task {TaskId} \"{Title}\" is now Available. Assignees: {Assignees}",
+            task.Id, task.Title, assignees);
+        return Task.CompletedTask;
+    }
+
+    public Task NotifyTaskStatusChangedAsync(
+        TaskItem task, TaskItemStatus previousStatus, TaskItemStatus newStatus, CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "[NOTIFY] Task {TaskId} \"{Title}\" status changed from {PreviousStatus} to {NewStatus}.",
+            task.Id, task.Title, previousStatus, newStatus);
         return Task.CompletedTask;
     }
 }
