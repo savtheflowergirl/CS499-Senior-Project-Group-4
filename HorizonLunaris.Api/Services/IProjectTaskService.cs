@@ -17,4 +17,5 @@ public interface IProjectTaskService
     Task DeleteTaskAsync(
         int taskId,
         CancellationToken ct = default);
+    Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default);
 }

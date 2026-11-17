@@ -3,14 +3,15 @@ using HorizonLunaris.Domain.Enums;
 
 namespace HorizonLunaris.Contracts;
 
-// ----- Feature 1: tasks and ownership -----
+// ----- Feature 1: tasks and assignments -----
 
 public record CreateTaskRequest(
     [param: Required, StringLength(200)] string Title,
     [param: StringLength(4000)] string? Description,
     DateTime? DueDateUtc,
     int? ParentTaskId,
-    int? OwnerId);
+    int? OwnerId,
+    IReadOnlyList<int>? AssigneeIds = null);
 
 public record UpdateTaskRequest(
     [param: Required, StringLength(200)] string Title,
@@ -18,6 +19,8 @@ public record UpdateTaskRequest(
     DateTime? DueDateUtc);
 
 public record AssignOwnerRequest(int OwnerId);
+public record AssignAssigneesRequest([param: Required] IReadOnlyList<int> AssigneeIds);
+public record AssigneeDto(int Id, string Name);
 
 public record TaskDto(
     int Id,
@@ -30,7 +33,8 @@ public record TaskDto(
     int? ParentTaskId,
     int? OwnerId,
     string? OwnerName,
-    IReadOnlyList<int> PrerequisiteTaskIds);
+    IReadOnlyList<int> PrerequisiteTaskIds,
+    IReadOnlyList<AssigneeDto> Assignees);
 
 // ----- Feature 2: status updates -----
 

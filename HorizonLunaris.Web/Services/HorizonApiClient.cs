@@ -12,6 +12,12 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
     public Task<IReadOnlyList<UserDto>> GetUsersAsync(CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<UserDto>>(HttpMethod.Get, "api/users", null, ct);
 
+    public Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken ct = default) =>
+        SendAsync<UserDto>(HttpMethod.Post, "api/users", request, ct);
+
+    public Task<UserDto> UpdateUserEmailAsync(int userId, UpdateUserEmailRequest request, CancellationToken ct = default) =>
+        SendAsync<UserDto>(HttpMethod.Put, $"api/users/{userId}/email", request, ct);
+
     // ----- Feature 1 -----
     public Task<IReadOnlyList<ProjectDto>> GetProjectsAsync(CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<ProjectDto>>(HttpMethod.Get, "api/projects", null, ct);
@@ -54,6 +60,8 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
 
         await EnsureSuccessAsync(response, ct);
     }
+    public Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default) =>
+        SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{taskId}/assignees", request, ct);
 
     // ----- Feature 2 -----
     public Task<StatusUpdateResult> UpdateStatusAsync(int taskId, UpdateStatusRequest request, CancellationToken ct = default) =>
@@ -77,6 +85,12 @@ public class HorizonApiClient(HttpClient http) : IHorizonApiClient
         using var response = await http.DeleteAsync($"api/tasks/{taskId}/dependencies/{prerequisiteTaskId}", ct);
         await EnsureSuccessAsync(response, ct);
     }
+
+    public Task<EmailSenderSettingsDto> GetEmailSenderSettingsAsync(CancellationToken ct = default) =>
+        SendAsync<EmailSenderSettingsDto>(HttpMethod.Get, "api/notifications/email-settings", null, ct);
+
+    public Task<EmailSenderSettingsDto> UpdateEmailSenderSettingsAsync(UpdateEmailSenderRequest request, CancellationToken ct = default) =>
+        SendAsync<EmailSenderSettingsDto>(HttpMethod.Put, "api/notifications/email-settings", request, ct);
 
     // ----- helpers -----
     private async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken ct)
