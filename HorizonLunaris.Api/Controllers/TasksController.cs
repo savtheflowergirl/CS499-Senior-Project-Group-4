@@ -42,7 +42,6 @@ public class TasksController(IProjectTaskService service) : ControllerBase
         await service.DeleteTaskAsync(taskId, request, ct);
         return NoContent();
     }
-}
     [HttpPut("{taskId:int}/assignees")]
     public async Task<IActionResult> AssignAssignees(int taskId, AssignAssigneesRequest request, CancellationToken ct) =>
         Ok(await service.AssignAssigneesAsync(taskId, request, ct));
