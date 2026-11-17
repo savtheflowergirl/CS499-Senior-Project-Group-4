@@ -29,6 +29,7 @@ public interface IHorizonApiClient
 
     Task DeleteTaskAsync(
         int taskId,
+        DeleteTaskRequest request,
         CancellationToken ct = default);
     Task<TaskDto> AssignAssigneesAsync(int taskId, AssignAssigneesRequest request, CancellationToken ct = default);
 

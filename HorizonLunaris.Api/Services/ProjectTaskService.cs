@@ -219,15 +219,16 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
 
             return task.ToDto();
         }
-        // Delete an existing task; SM
+        // Delete a task with chain deletion options; SM
         public async Task DeleteTaskAsync(
             int taskId,
+            DeleteTaskRequest request,
             CancellationToken ct = default)
         {
             // Only Project Managers can delete tasks; SM
             await currentUser.GetRequiredProjectManagerAsync(ct);
 
-            // Find the task in database; SM
+            // Find the selected task; SM
             var task = await db.Tasks
                 .FirstOrDefaultAsync(t => t.Id == taskId, ct);
 
@@ -236,30 +237,133 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
                 throw new NotFoundException("Task not found.");
             }
 
-            // Check for existing subtasks; SM
-            var hasSubTasks = await db.Tasks
-                .AnyAsync(t => t.ParentTaskId == taskId, ct);
-
-            if (hasSubTasks)
+            // Validate the deletion option; SM
+            if (!Enum.IsDefined(request.Mode))
             {
-                throw new BusinessRuleException(
-                    "Cannot delete a task that has subtasks.");
+                throw new BusinessRuleException("Invalid deletion option.");
             }
 
-            // Check for any dependencies involving this task; SM
-            var hasDependencies = await db.TaskDependencies
-                .AnyAsync(d =>
-                    d.DependentTaskId == taskId ||
-                    d.PrerequisiteTaskId == taskId, ct);
+            // Load task hierarchy for this project; SM
+            var projectTasks = await db.Tasks
+                .Where(t => t.ProjectId == task.ProjectId)
+                .ToListAsync(ct);
 
-            if (hasDependencies)
+            var children = projectTasks
+                .Where(t => t.ParentTaskId == taskId)
+                .ToList();
+
+            // TaskOnly does not remove subtasks; SM
+            if (request.Mode == TaskDeletionMode.TaskOnly &&
+                children.Count > 0)
             {
                 throw new BusinessRuleException(
-                    "Cannot delete a task with existing dependencies.");
+                    "This task has subtasks. Choose a chain deletion option.");
             }
 
-            // Remove task from database; SM
-            db.Tasks.Remove(task);
+            var tasksToDelete = new List<TaskItem> { task };
+
+            if (request.Mode == TaskDeletionMode.DeleteChildren)
+            {
+                // Collect all descendants and their depth; SM
+                var queue = new Queue<(int Id, int Depth)>();
+                var visited = new HashSet<int> { taskId };
+
+                queue.Enqueue((taskId, 0));
+
+                while (queue.Count > 0)
+                {
+                    var (parentId, depth) = queue.Dequeue();
+
+                    foreach (var child in projectTasks
+                        .Where(t => t.ParentTaskId == parentId))
+                    {
+                        if (visited.Add(child.Id))
+                        {
+                            tasksToDelete.Add(child);
+                            queue.Enqueue((child.Id, depth + 1));
+                        }
+                    }
+                }
+            }
+
+            var deletedIds = tasksToDelete
+                .Select(t => t.Id)
+                .ToHashSet();
+
+            // Refuse deletion when dependency links involve surviving tasks; SM
+            var hasExternalDependencies =
+                await db.TaskDependencies.AnyAsync(
+                    d =>
+                        (deletedIds.Contains(d.DependentTaskId) &&
+                         !deletedIds.Contains(d.PrerequisiteTaskId)) ||
+                        (deletedIds.Contains(d.PrerequisiteTaskId) &&
+                         !deletedIds.Contains(d.DependentTaskId)),
+                    ct);
+
+            if (hasExternalDependencies)
+            {
+                throw new BusinessRuleException(
+                    "Cannot delete tasks with dependencies outside the deletion group.");
+            }
+
+            // Keep all database changes atomic; SM
+            await using var transaction =
+                await db.Database.BeginTransactionAsync(ct);
+
+            // Remove dependencies entirely within the deletion group; SM
+            var internalDependencies = await db.TaskDependencies
+                .Where(d =>
+                    deletedIds.Contains(d.DependentTaskId) &&
+                    deletedIds.Contains(d.PrerequisiteTaskId))
+                .ToListAsync(ct);
+
+            db.TaskDependencies.RemoveRange(internalDependencies);
             await db.SaveChangesAsync(ct);
+
+            if (request.Mode == TaskDeletionMode.KeepChildren)
+            {
+                // Reassign direct children to the deleted task's parent; SM
+                foreach (var child in children)
+                {
+                    child.ParentTaskId = task.ParentTaskId;
+                }
+
+                await db.SaveChangesAsync(ct);
+            }
+
+            if (request.Mode == TaskDeletionMode.DeleteChildren)
+            {
+                // Delete leaf tasks first to respect parent-child restrictions; SM
+                var remaining = tasksToDelete.ToDictionary(t => t.Id);
+
+                while (remaining.Count > 0)
+                {
+                    var leafTasks = remaining.Values
+                        .Where(t => !remaining.Values.Any(
+                            child => child.ParentTaskId == t.Id))
+                        .ToList();
+
+                    if (leafTasks.Count == 0)
+                    {
+                        throw new BusinessRuleException(
+                            "Invalid task hierarchy detected.");
+                    }
+
+                    db.Tasks.RemoveRange(leafTasks);
+                    await db.SaveChangesAsync(ct);
+
+                    foreach (var leaf in leafTasks)
+                    {
+                        remaining.Remove(leaf.Id);
+                    }
+                }
+            }
+            else
+            {
+                db.Tasks.Remove(task);
+                await db.SaveChangesAsync(ct);
+            }
+
+            await transaction.CommitAsync(ct);
         }
 }

@@ -18,6 +18,17 @@ public record UpdateTaskRequest(
     [param: StringLength(4000)] string? Description,
     DateTime? DueDateUtc);
 
+// ----- Chain deletion options; SM -----
+
+public enum TaskDeletionMode
+{
+    TaskOnly,
+    DeleteChildren,
+    KeepChildren
+}
+
+public record DeleteTaskRequest(TaskDeletionMode Mode);
+
 public record AssignOwnerRequest(int OwnerId);
 public record AssignAssigneesRequest([param: Required] IReadOnlyList<int> AssigneeIds);
 public record AssigneeDto(int Id, string Name);
