@@ -1,4 +1,3 @@
-
 using System.Security.Claims;
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Data;
@@ -47,9 +46,23 @@ public class AuthenticatedCurrentUser(
     {
         var user = await GetRequiredAsync(ct);
 
-        if (user.Role != UserRole.ProjectManager)
+        // Admins can also act as Project Managers (matches main); SM
+        if (user.Role is not (UserRole.ProjectManager or UserRole.Admin))
             throw new ForbiddenException(
-                "Only a Project Manager can perform this action.");
+                "Only a Project Manager or Admin can perform this action.");
+
+        return user;
+    }
+
+    // Added from main for user management; SM
+    public async Task<User> GetRequiredAdminAsync(
+        CancellationToken ct = default)
+    {
+        var user = await GetRequiredAsync(ct);
+
+        if (user.Role != UserRole.Admin)
+            throw new ForbiddenException(
+                "Only an Admin can manage users.");
 
         return user;
     }
