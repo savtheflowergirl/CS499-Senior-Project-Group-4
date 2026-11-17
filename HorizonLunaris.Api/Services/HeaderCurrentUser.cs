@@ -26,8 +26,16 @@ public class HeaderCurrentUser(IHttpContextAccessor accessor, HorizonLunarisDbCo
     public async Task<User> GetRequiredProjectManagerAsync(CancellationToken ct = default)
     {
         var user = await GetRequiredAsync(ct);
-        if (user.Role != UserRole.ProjectManager)
-            throw new ForbiddenException("Only a Project Manager can perform this action.");
+        if (user.Role is not (UserRole.ProjectManager or UserRole.Admin))
+            throw new ForbiddenException("Only a Project Manager or Admin can perform this action.");
+        return user;
+    }
+
+    public async Task<User> GetRequiredAdminAsync(CancellationToken ct = default)
+    {
+        var user = await GetRequiredAsync(ct);
+        if (user.Role != UserRole.Admin)
+            throw new ForbiddenException("Only an Admin can manage users.");
         return user;
     }
 }

@@ -10,6 +10,6 @@ public class User
     public string? PasswordHash { get; set; }
     public UserRole Role { get; set; } = UserRole.TeamMember;
 
-    public ICollection<TaskItem> OwnedTasks { get; set; } = new List<TaskItem>();
+    public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

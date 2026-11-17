@@ -1,4 +1,3 @@
-
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Data;
 using HorizonLunaris.Domain.Enums;
@@ -12,7 +11,8 @@ namespace HorizonLunaris.Api.Services;
 public class TaskProgressService(
     HorizonLunarisDbContext db,
     ICurrentUser currentUser,
-    IDependencyService dependencies) : ITaskProgressService
+    IDependencyService dependencies,
+    INotificationService notifications) : ITaskProgressService
 {
     public async Task<StatusUpdateResult> UpdateStatusAsync(
         int taskId,
@@ -21,18 +21,18 @@ public class TaskProgressService(
     {
         // Find task in database; SM
         var task = await db.Tasks
-            .Include(t => t.Owner)
+            .Include(t => t.Assignees)
             .Include(t => t.Prerequisites)
             .FirstOrDefaultAsync(t => t.Id == taskId, ct);
 
         if (task == null)
             throw new NotFoundException("Task not found.");
 
-        // Only the owner or Project Manager may change status; SM
+        // Only an assignee, Project Manager, or Admin may change status; SM
         var user = await currentUser.GetRequiredAsync(ct);
 
-        if (user.Role != UserRole.ProjectManager &&
-            task.OwnerId != user.Id)
+        if (user.Role is not (UserRole.ProjectManager or UserRole.Admin) &&
+            task.Assignees.All(assignee => assignee.Id != user.Id))
         {
             throw new ForbiddenException(
                 "You cannot change this task's status.");
@@ -98,6 +98,7 @@ public class TaskProgressService(
         }
 
         // Update task status; SM
+        var previousStatus = task.Status;
         task.Status = request.Status;
 
         if (request.Status == TaskItemStatus.Completed)
@@ -128,6 +129,10 @@ public class TaskProgressService(
             unlockedTaskIds = await dependencies.ResolveUnlocksAsync(
                 taskId, ct);
         }
+
+        // Notify about the status change (from main); SM
+        await notifications.NotifyTaskStatusChangedAsync(
+            task, previousStatus, request.Status, ct);
 
         return new StatusUpdateResult(
             task.ToDto(),

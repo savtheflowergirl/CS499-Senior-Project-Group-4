@@ -1,4 +1,5 @@
-
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
@@ -32,8 +33,7 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
             : "Unknown task";
 
     public bool CanChangeStatus(TaskDto task) =>
-        CurrentUser is not null &&
-        (IsProjectManager || task.OwnerId == CurrentUser.Id);
+        CurrentUser is not null && (IsProjectManager || task.Assignees.Any(assignee => assignee.Id == CurrentUser.Id));
 
     // ----- Manual Review Gate helpers; SM -----
 
@@ -91,6 +91,11 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         int id,
         CancellationToken ct)
     {
+        if (!ModelState.IsValid)
+        {
+            return await OnGetAsync(id, ct);
+        }
+
         if (string.IsNullOrWhiteSpace(NewTask.Title))
         {
             ErrorMessage = "Task title is required.";
@@ -99,24 +104,16 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
 
         try
         {
-            var description =
-                string.IsNullOrWhiteSpace(NewTask.Description)
-                    ? null
-                    : NewTask.Description.Trim();
+            var description = string.IsNullOrWhiteSpace(NewTask.Description) ? null : NewTask.Description.Trim();
+            DateTime? dueUtc = null;
+            if (!string.IsNullOrEmpty(NewTask.DueDate))
+            {
+                var dueDate = DateOnly.ParseExact(NewTask.DueDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None);
+                dueUtc = DateTime.SpecifyKind(dueDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+            }
 
-            DateTime? dueUtc = NewTask.DueDate is { } d
-                ? DateTime.SpecifyKind(d.Date, DateTimeKind.Utc)
-                : null;
-
-            var task = await Api.CreateTaskAsync(
-                id,
-                new CreateTaskRequest(
-                    NewTask.Title.Trim(),
-                    description,
-                    dueUtc,
-                    NewTask.ParentTaskId,
-                    NewTask.OwnerId),
-                ct);
+            var task = await Api.CreateTaskAsync(id,
+                new CreateTaskRequest(NewTask.Title.Trim(), description, dueUtc, NewTask.ParentTaskId, null, NewTask.AssigneeIds), ct);
 
             Message = $"Created task \"{task.Title}\".";
         }
@@ -129,20 +126,92 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostAssignOwnerAsync(
+    public async Task<IActionResult> OnPostAssignAssigneesAsync(int id, int taskId, int[]? assigneeIds, CancellationToken ct)
+    {
+        try
+        {
+            var task = await Api.AssignAssigneesAsync(taskId, new AssignAssigneesRequest(assigneeIds ?? []), ct);
+            var names = task.Assignees.Count == 0 ? "no one" : string.Join(", ", task.Assignees.Select(assignee => assignee.Name));
+            Message = $"Updated assignments for \"{task.Title}\": {names}.";
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    // Edit an existing task; SM
+    public async Task<IActionResult> OnPostEditTaskAsync(
         int id,
         int taskId,
-        int ownerId,
+        string title,
+        string? description,
+        string? dueDate,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            ErrorMessage = "Task title is required.";
+            return RedirectToPage(new { id });
+        }
+
+        // Same YYYY-MM-DD format as the create form; SM
+        if (!TryParseDueDate(dueDate, out var dueUtc))
+        {
+            ErrorMessage = "Enter a valid due date in YYYY-MM-DD format.";
+            return RedirectToPage(new { id });
+        }
+
+        try
+        {
+            var request = new UpdateTaskRequest(
+                title.Trim(),
+                string.IsNullOrWhiteSpace(description)
+                    ? null
+                    : description.Trim(),
+                dueUtc);
+
+            var task = await Api.UpdateTaskAsync(
+                taskId, request, ct);
+
+            Message = $"Task \"{task.Title}\" updated successfully.";
+        }
+        catch (Exception ex) when (
+            ex is HttpRequestException or ApiException)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    // Delete task using the selected chain deletion option; SM
+    public async Task<IActionResult> OnPostDeleteTaskAsync(
+        int id,
+        int taskId,
+        TaskDeletionMode deletionMode,
         CancellationToken ct)
     {
         try
         {
-            var task = await Api.AssignOwnerAsync(
-                taskId,
-                new AssignOwnerRequest(ownerId),
-                ct);
+            // Send the selected deletion option to the API; SM
+            var request = new DeleteTaskRequest(deletionMode);
 
-            Message = $"Assigned \"{task.Title}\" to {task.OwnerName}.";
+            await Api.DeleteTaskAsync(taskId, request, ct);
+
+            Message = deletionMode switch
+            {
+                TaskDeletionMode.DeleteChildren =>
+                    "Task and all its subtasks deleted successfully.",
+
+                TaskDeletionMode.KeepChildren =>
+                    "Task deleted successfully. Its subtasks were preserved.",
+
+                _ => "Task deleted successfully."
+            };
         }
         catch (Exception ex) when (
             ex is HttpRequestException or ApiException)
@@ -290,6 +359,35 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         return RedirectToPage(new { id });
     }
 
+    // ----- Date parsing helper; SM -----
+
+    // Parses the YYYY-MM-DD text used by the date inputs; empty means no due date.
+    private static bool TryParseDueDate(string? value, out DateTime? dueUtc)
+    {
+        dueUtc = null;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (!DateOnly.TryParseExact(
+                value.Trim(),
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var date))
+        {
+            return false;
+        }
+
+        dueUtc = DateTime.SpecifyKind(
+            date.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+
+        return true;
+    }
+
     // ----- Task hierarchy -----
 
     private static List<TaskRow> Flatten(
@@ -333,8 +431,22 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
     {
         public string Title { get; set; } = "";
         public string? Description { get; set; }
-        public DateTime? DueDate { get; set; }
+
+        [CustomValidation(typeof(NewTaskInput), nameof(ValidateDueDate))]
+        public string? DueDate { get; set; }
+
         public int? ParentTaskId { get; set; }
-        public int? OwnerId { get; set; }
+        public List<int> AssigneeIds { get; set; } = [];
+
+        public static ValidationResult? ValidateDueDate(string? value, ValidationContext context)
+        {
+            if (string.IsNullOrEmpty(value) || DateOnly.TryParseExact(
+                    value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                return ValidationResult.Success;
+            }
+
+            return new ValidationResult("Enter a valid date in YYYY-MM-DD format.");
+        }
     }
 }
