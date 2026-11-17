@@ -1,5 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using HorizonLunaris.Domain.Enums;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace HorizonLunaris.Contracts;
 
@@ -45,18 +46,18 @@ public record TaskDto(
     int? OwnerId,
     string? OwnerName,
     IReadOnlyList<int> PrerequisiteTaskIds,
+    IReadOnlyList<AssigneeDto> Assignees,
     bool RequiresReview,
     bool IsApproved,
     DateTime? ApprovedAtUtc);
 
-    // ----- Manual Review Gate; SM -----
+// ----- Manual Review Gate; SM -----
 
-    // Allows a Project Manager to enable or disable review.
-    public record SetReviewRequirementRequest(bool RequiresReview);
+// Allows a Project Manager to enable or disable review.
+public record SetReviewRequirementRequest(bool RequiresReview);
 
-    // Allows a Project Manager to approve or reject a task.
-    public record ReviewTaskRequest(bool Approved);
-    IReadOnlyList<AssigneeDto> Assignees);
+// Allows a Project Manager to approve or reject a task.
+public record ReviewTaskRequest(bool Approved);
 
 // ----- Feature 2: status updates -----
 

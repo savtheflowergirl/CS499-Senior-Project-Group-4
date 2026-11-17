@@ -22,7 +22,7 @@ public class TaskReviewService(
         await currentUser.GetRequiredProjectManagerAsync(ct);
 
         var task = await db.Tasks
-            .Include(t => t.Owner)
+            .Include(t => t.Assignees)
             .Include(t => t.Prerequisites)
             .FirstOrDefaultAsync(t => t.Id == taskId, ct);
 
@@ -71,7 +71,7 @@ public class TaskReviewService(
         await currentUser.GetRequiredProjectManagerAsync(ct);
 
         var task = await db.Tasks
-            .Include(t => t.Owner)
+            .Include(t => t.Assignees)
             .Include(t => t.Prerequisites)
             .FirstOrDefaultAsync(t => t.Id == taskId, ct);
 

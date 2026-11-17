@@ -24,7 +24,7 @@ public static class DtoMapping
 
         return new TaskDto(t.Id, t.Title, t.Description, t.Status, t.DueDateUtc, t.CompletedAtUtc,
             t.ProjectId, t.ParentTaskId, assignees.FirstOrDefault()?.Id, assignees.FirstOrDefault()?.Name,
-            t.Prerequisites.Select(d => d.PrerequisiteTaskId).ToList(), assignees)
+            t.Prerequisites.Select(d => d.PrerequisiteTaskId).ToList(), assignees,
             t.RequiresReview,
             t.IsApproved,
             t.ApprovedAtUtc);

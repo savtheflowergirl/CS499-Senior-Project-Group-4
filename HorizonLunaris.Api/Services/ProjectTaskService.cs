@@ -184,7 +184,7 @@ public class ProjectTaskService(HorizonLunarisDbContext db, ICurrentUser current
 
             // Find the requested task; SM
             var task = await db.Tasks
-                .Include(t => t.Owner)
+                .Include(t => t.Assignees)
                 .Include(t => t.Prerequisites)
                 .FirstOrDefaultAsync(t => t.Id == taskId, ct);
 

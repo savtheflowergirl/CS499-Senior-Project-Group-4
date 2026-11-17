@@ -133,9 +133,6 @@ namespace HorizonLunaris.Data.Migrations
                     b.Property<bool>("IsApproved")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("OwnerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("ParentTaskId")
                         .HasColumnType("INTEGER");
 
