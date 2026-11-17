@@ -16,10 +16,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.Configure<EmailSmtpOptions>(builder.Configuration.GetSection(EmailSmtpOptions.SectionName));
 
 // ---- Services: ADD YOUR OWN LINE ONLY. Do not reorder or reformat other lines. ----
 builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
-builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
+builder.Services.AddScoped<INotificationService, EmailNotificationService>();
+builder.Services.AddScoped<IEmailSenderSettingsService, EmailSenderSettingsService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IProjectTaskService, ProjectTaskService>();   // Feature 1
 builder.Services.AddScoped<ITaskProgressService, TaskProgressService>(); // Feature 2
 builder.Services.AddScoped<IDependencyService, DependencyService>();     // Feature 3

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using HorizonLunaris.Contracts;
 using HorizonLunaris.Domain.Enums;
 using HorizonLunaris.Web.Services;
@@ -31,7 +33,7 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
 
     /// <summary>Mirrors the API rule: only the task owner or a Project Manager may change status.</summary>
     public bool CanChangeStatus(TaskDto task) =>
-        CurrentUser is not null && (IsProjectManager || task.OwnerId == CurrentUser.Id);
+        CurrentUser is not null && (IsProjectManager || task.Assignees.Any(assignee => assignee.Id == CurrentUser.Id));
 
     public async Task<IActionResult> OnGetAsync(int id, CancellationToken ct)
     {
@@ -65,6 +67,11 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
 
     public async Task<IActionResult> OnPostCreateTaskAsync(int id, CancellationToken ct)
     {
+        if (!ModelState.IsValid)
+        {
+            return await OnGetAsync(id, ct);
+        }
+
         if (string.IsNullOrWhiteSpace(NewTask.Title))
         {
             ErrorMessage = "Task title is required.";
@@ -74,10 +81,15 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         try
         {
             var description = string.IsNullOrWhiteSpace(NewTask.Description) ? null : NewTask.Description.Trim();
-            DateTime? dueUtc = NewTask.DueDate is { } d ? DateTime.SpecifyKind(d.Date, DateTimeKind.Utc) : null;
+            DateTime? dueUtc = null;
+            if (!string.IsNullOrEmpty(NewTask.DueDate))
+            {
+                var dueDate = DateOnly.ParseExact(NewTask.DueDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None);
+                dueUtc = DateTime.SpecifyKind(dueDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+            }
 
             var task = await Api.CreateTaskAsync(id,
-                new CreateTaskRequest(NewTask.Title.Trim(), description, dueUtc, NewTask.ParentTaskId, NewTask.OwnerId), ct);
+                new CreateTaskRequest(NewTask.Title.Trim(), description, dueUtc, NewTask.ParentTaskId, null, NewTask.AssigneeIds), ct);
 
             Message = $"Created task \"{task.Title}\".";
         }
@@ -88,12 +100,13 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostAssignOwnerAsync(int id, int taskId, int ownerId, CancellationToken ct)
+    public async Task<IActionResult> OnPostAssignAssigneesAsync(int id, int taskId, int[]? assigneeIds, CancellationToken ct)
     {
         try
         {
-            var task = await Api.AssignOwnerAsync(taskId, new AssignOwnerRequest(ownerId), ct);
-            Message = $"Assigned \"{task.Title}\" to {task.OwnerName}.";
+            var task = await Api.AssignAssigneesAsync(taskId, new AssignAssigneesRequest(assigneeIds ?? []), ct);
+            var names = task.Assignees.Count == 0 ? "no one" : string.Join(", ", task.Assignees.Select(assignee => assignee.Name));
+            Message = $"Updated assignments for \"{task.Title}\": {names}.";
         }
         catch (Exception ex) when (ex is HttpRequestException or ApiException)
         {
@@ -242,8 +255,22 @@ public class ProjectModel(IHorizonApiClient api) : HorizonPageModel(api)
     {
         public string Title { get; set; } = "";
         public string? Description { get; set; }
-        public DateTime? DueDate { get; set; }
+
+        [CustomValidation(typeof(NewTaskInput), nameof(ValidateDueDate))]
+        public string? DueDate { get; set; }
+
         public int? ParentTaskId { get; set; }
-        public int? OwnerId { get; set; }
+        public List<int> AssigneeIds { get; set; } = [];
+
+        public static ValidationResult? ValidateDueDate(string? value, ValidationContext context)
+        {
+            if (string.IsNullOrEmpty(value) || DateOnly.TryParseExact(
+                    value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+            {
+                return ValidationResult.Success;
+            }
+
+            return new ValidationResult("Enter a valid date in YYYY-MM-DD format.");
+        }
     }
 }
